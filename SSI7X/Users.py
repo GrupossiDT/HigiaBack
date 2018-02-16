@@ -3,7 +3,6 @@ Created on 22/01/2018
 
 @author: CRISTIAN.BOTINA
 '''
-import json # @UnresolvedImport
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField
 import SSI7X.Static.config as conf  # @UnresolvedImport
@@ -11,7 +10,8 @@ from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
 from SSI7X.Static.Utils import Utils  # @UnresolvedImport
 import SSI7X.Static.errors as errors  # @UnresolvedImport
 import SSI7X.Static.labels as labels  # @UnresolvedImport
-import time,jwt,hashlib #@UnresolvedImport
+import SSI7X.Static.opciones_higia as optns  # @UnresolvedImport
+import time,hashlib,json #@UnresolvedImport
 from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
 from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
@@ -25,48 +25,54 @@ class ActualizarAcceso(Form):
     login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)]) 
     password = StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_INGRSA_CNTRSNA)])
     nombre_usuario = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_INGSA_NMBRE_USRO)])
-    #user_photo =  StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_FTO)])
+
 
 class AcInsertarAcceso(Form):
     login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)]) 
     password = StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_INGRSA_CNTRSNA)])
     nombre_usuario = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_INGSA_NMBRE_USRO)])
-    #user_photo =  StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_FTO)])
+
 
 
 class Usuarios(Resource):
+    
     def post(self, **kwargs):
-        if kwargs['page'] == 'listar_usuarios':
-            arrayParametros={}
-            arrayParametros['id_lgn_ge']=request.form['id_login_ge'] 
-            arrayParametros['lgn']=request.form['login']
-            return self.ObtenerUsuarios(arrayParametros)
+        if kwargs['page'] == 'ListarUsuarios':
+            return self.ObtenerUsuarios()
         elif kwargs['page'] == 'insertar_usuario':
             return self.InsertarUsuarios()
         elif kwargs['page'] == 'actualizar_usuario':
             return self.ActualizarUsuario()
     
-    def ObtenerUsuarios(self,parametros):
+    def ObtenerUsuarios(self):
         token = request.headers['Authorization']
-        ln_opcn_mnu = request.form["id_mnu"]
+        ln_opcn_mnu = request.form["id_mnu_ge"]
         validacionSeguridad = ValidacionSeguridad()
-        val = validacionSeguridad.Principal(token,ln_opcn_mnu)
+        val = validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
         
         prmtrs=''
-        if parametros:
-            id_lgn_ge = parametros['id_lgn_ge']
-            lgn = parametros['lgn']
-            id_grpo_emprsrl = '2'
-            if id_lgn_ge:
-                prmtrs = prmtrs + "  and a.id = " + id_lgn_ge
-            if lgn:
-                prmtrs = prmtrs + "  and lgn like '%" + lgn + "%' "
-            if id_grpo_emprsrl:
-                prmtrs = prmtrs + "  and id_grpo_emprsrl = " + id_grpo_emprsrl + " "
-                
+        
+        
+        
+        try:
+            id_lgn_ge = request.form['id_login_ge'] 
+            prmtrs = prmtrs + "  and a.id = " + id_lgn_ge
+        except Exception:
+            pass
+        try:
+            lgn = request.form['login']
+            prmtrs = prmtrs + "  and lgn like '%" + lgn + "%' "
+        except Exception:
+            pass
+        try:
+            id_grpo_emprsrl = request.form['id_grpo_emprsrl']
+            prmtrs = prmtrs + "  and id_grpo_emprsrl = " + id_grpo_emprsrl + " "
+        except Exception:
+            pass        
+        
         if val :
             Cursor = lc_cnctn.queryFree(" select "\
-                                    " a.id, b.lgn, b.nmbre_usro, b.fto_usro "\
+                                    " a.id, b.lgn, b.nmbre_usro, b.fto_usro, case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo  "\
                                     " from "\
                                     " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
                                     " a.id_lgn = b.id "\
@@ -86,9 +92,9 @@ class Usuarios(Resource):
     def InsertarUsuarios(self):
         token = request.headers['Authorization']
         fcha_actl = time.ctime()
-        ln_opcn_mnu = request.form["id_mnu"]
+        ln_opcn_mnu = request.form["id_mnu_ge"]
         validacionSeguridad = ValidacionSeguridad()
-        val = validacionSeguridad.Principal(token,ln_opcn_mnu)
+        val = validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
         lc_cntrsna = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
         #Validar los campos requeridos.
         u = AcInsertarAcceso(request.form)
@@ -96,8 +102,6 @@ class Usuarios(Resource):
             return Utils.nice_json({"error":u.errors},400)
         
         if val :
-            DatosUsuario = jwt.decode(token, conf.SS_TKN_SCRET_KEY, 'utf-8')
-            id_lgn_ge_ssn = validacionSeguridad.validaUsuario(DatosUsuario['lgn'])
             '''
                 Aqui insertamos los datos del usuario
             '''
@@ -134,7 +138,6 @@ class Usuarios(Resource):
             arrayValues['id']=str(id_lgn)
             self.UsuarioActualizaRegistro(arrayValues,'tblogins')
             
-            id_lgn_ge=self.UsuarioInsertaRegistro(arrayValues3,'tblogins_ge')
             return Utils.nice_json({"error":labels.SCCSS_RGSTRO_EXTSO},200)
             '''
             Fin de la insercion de los datos
@@ -145,17 +148,14 @@ class Usuarios(Resource):
     def ActualizarUsuario(self):
         token = request.headers['Authorization']
         fcha_actl = time.ctime()
-        ln_opcn_mnu = request.form["id_mnu"]
+        ln_opcn_mnu = request.form["id_mnu_ge"]
         validacionSeguridad = ValidacionSeguridad()
-        val = validacionSeguridad.Principal(token,ln_opcn_mnu)
-        Upload = UploadFiles()
+        val = validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
         #Validar los campos requeridos.
         u = ActualizarAcceso(request.form)
         if not u.validate():
             return Utils.nice_json({"error":u.errors},400)
         if val :
-            DatosUsuario = jwt.decode(token, conf.SS_TKN_SCRET_KEY, 'utf-8')
-            id_lgn_ge_ssn = validacionSeguridad.validaUsuario(DatosUsuario['lgn'])
             md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
             
             '''
@@ -226,7 +226,6 @@ class Usuarios(Resource):
             mFile = UploadFiles(drccn_imgn,nmbre_archvo,crr_drccn)
             resultImageUpload = mFile.upload(file[cmpo])
             
-           # print(mFile.getExtensionFile(fullPath))
             
             #Check status uploadimage
             if resultImageUpload["status"] == "OK":

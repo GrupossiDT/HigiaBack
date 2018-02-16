@@ -17,13 +17,16 @@ import jwt,json #@UnresolvedImport
 class ValidacionSeguridad(Resource):
     Utils = Utils()
     C = ConnectDB()
-    def Principal(self,token,id_mnu):
-        if not token and id_mnu:
+    def Principal(self,token,id_mnu_ge,sttc_mnu):
+        if not token and id_mnu_ge:
             return False
         DatosUsuario = jwt.decode(token, conf.SS_TKN_SCRET_KEY, 'utf-8')
         if DatosUsuario:
-            lo_datos = self.validaUsuario(DatosUsuario['lgn'])
-            return self.ValidaOpcionMenu(lo_datos['id_prfl_scrsl'], id_mnu)
+            if int(sttc_mnu) == int(id_mnu_ge):
+                lo_datos = self.validaUsuario(DatosUsuario['lgn'])
+                return self.ValidaOpcionMenu(lo_datos['id_prfl_scrsl'], id_mnu_ge)
+            else:
+                return False
         else:
             False
         
@@ -56,7 +59,7 @@ class ValidacionSeguridad(Resource):
         except jwt.exceptions.ExpiredSignatureError:
             return  False     
     
-    def ValidaOpcionMenu(self,id_lgn_prfl_scrsl,id_mnu):
+    def ValidaOpcionMenu(self,id_lgn_prfl_scrsl,id_mnu_ge):
             Cursor =  self.C.queryFree(" select a.id "\
                                  " from ssi7x.tblogins_perfiles_menu a inner join "\
                                      " ssi7x.tblogins_perfiles_sucursales b "\
@@ -67,7 +70,7 @@ class ValidacionSeguridad(Resource):
                                      " where c.estdo=true "\
                                      " and b.estdo=true "\
                                      " and a.estdo=true "\
-                                     " and e.id = "+str(id_mnu)+" and a.id_lgn_prfl_scrsl = "+str(id_lgn_prfl_scrsl))                   
+                                     " and d.id = "+str(id_mnu_ge)+" and a.id_lgn_prfl_scrsl = "+str(id_lgn_prfl_scrsl))                   
             if Cursor:
                 return True
             else:
@@ -93,7 +96,9 @@ class ValidacionSeguridad(Resource):
                              " lgn_ge.id as id_lgn_ge, " \
                              " lgn.lgn as lgn, " \
                              " crgo.dscrpcn as crgo, " \
-                             " lgn.fto_usro as fto_usro "\
+                             " lgn.fto_usro as fto_usro, "\
+                             " emplds_une.id_undd_ngco as id_undd_ngco, "\
+                             " undd_ngco.id_grpo_emprsrl as id_grpo_emprsrl "
                              " from ssi7x.tblogins_ge lgn_ge " \
                              " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn " \
                              " left join ssi7x.tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id " \
@@ -101,5 +106,6 @@ class ValidacionSeguridad(Resource):
                              " left join ssi7x.tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id " \
                              " left join ssi7x.tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une " \
                              " left join ssi7x.tbcargos crgo on crgo.id = crgo_une.id_crgo " \
-                             " where lgn.lgn = '"+usuario+"'")
+                             " left join ssi7x.tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco " \
+                             " where lgn.lgn = '"+usuario+"' and id_mtvo_rtro_une is null")
         return cursor
