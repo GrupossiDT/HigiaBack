@@ -1,5 +1,4 @@
 import json
-from flask import session
 from flask import make_response
 from user_agents import parse 
 class Utils:
