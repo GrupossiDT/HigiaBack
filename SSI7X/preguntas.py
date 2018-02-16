@@ -46,7 +46,7 @@ class Preguntas(Resource):
                        
     def crearPregunta(self):
         
-        ln_opcn_mnu = request.form["id_mnu"]
+        ln_opcn_mnu = request.form["id_mnu_ge"]
         token = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(token,ln_opcn_mnu)
@@ -78,41 +78,55 @@ class Preguntas(Resource):
         return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)       
     
     def ObtenerPreguntas(self): 
-        ln_opcn_mnu = request.form["id_mnu"]
+        ln_opcn_mnu = request.form["id_mnu_ge"]
         token = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(token,ln_opcn_mnu)
         arrayParametros={}
-        arrayParametros['cdgo']=request.form['cdgo'] 
-        arrayParametros['dscrpcn']=request.form['dscrpcn']
         prmtrs=''
-        if arrayParametros:
+        try:
+            arrayParametros['cdgo']=request.form['cdgo']
             cdgo = arrayParametros['cdgo']
+            prmtrs += "  and a.cdgo like '%" + cdgo+"%'"
+        except:
+            pass
+        try: 
+            arrayParametros['dscrpcn']=request.form['dscrpcn']
             dscrpcn=arrayParametros['dscrpcn']
-            if cdgo:
-                prmtrs = prmtrs + "  and a.cdgo like '%" + cdgo+"%'"
-            if dscrpcn:
-                prmtrs = prmtrs + "  and a.dscrpcn like '%" + dscrpcn + "%' "
+            prmtrs += "  and a.dscrpcn like '%" + dscrpcn + "%' "
+        except:
+            pass
+        
+        try: 
+            arrayParametros['id_prgnta_ge']=request.form['id_prgnta_ge']
+            id_prgnta_ge=arrayParametros['id_prgnta_ge']
+            prmtrs += "  and b.id = '" +id_prgnta_ge+ "'"
+        except:
+            pass
+        
         if val:
-            Cursor = C.queryFree(" select "\
-                                " a.cdgo,a.dscrpcn "\
+        
+            StrSql=" select "\
+                                " b.id,a.cdgo,a.dscrpcn "\
                                 " from "\
                                 " ssi7x.tbpreguntas_seguridad a inner join ssi7x.tbpreguntas_seguridad_ge b on "\
                                 " a.id=b.id_prgnta_sgrdd "\
                                 " where "\
                                 " b.estdo = true "\
-                                + str(prmtrs) )
+                                + str(prmtrs)
+            print(StrSql)
+            Cursor = C.queryFree(StrSql)
             if  Cursor :    
                 data = json.loads(json.dumps(Cursor, indent=2))
                 return Utils.nice_json(data,200)
             else:
                 return Utils.nice_json({"error":errors.ERR_NO_RGSTRS},400)  
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)    
+            return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)      
     
     def ActualizarPreguntas(self):
         token = request.headers['Authorization']
-        ln_opcn_mnu = request.form["id_mnu"]
+        ln_opcn_mnu = request.form["id_mnu_ge"]
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(token,ln_opcn_mnu)
         u = ActualizarAcceso(request.form)

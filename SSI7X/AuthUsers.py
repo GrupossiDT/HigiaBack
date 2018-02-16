@@ -122,7 +122,7 @@ class AutenticacionUsuarios(Resource):
                 if type(id_lgn_prfl_scrsl) is not dict:
                     return id_lgn_prfl_scrsl
                 
-                strQuery = 'SELECT a."text",a.id,a.parentid,a.lnk,(d.id is Not Null) favorito '\
+                strQuery = 'SELECT a."text",a.id,a.parentid,a.lnk as enlace,(d.id is Not Null) favorito '\
                                 'FROM (select  c.dscrpcn as text ,  b.id_mnu as id , c.id_mnu as parentid , c.lnk ,a.id Mid,c.ordn '\
                                 'FROM ssi7x.tblogins_perfiles_menu a INNER JOIN '\
                                 'ssi7x.tbmenu_ge b on a.id_mnu_ge=b.id INNER JOIN '\
