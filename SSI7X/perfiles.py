@@ -13,7 +13,7 @@ import SSI7X.Static.labels as labels # @UnresolvedImport
 import SSI7X.Static.errors as errors  # @UnresolvedImport
 import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
 import SSI7X.Static.config as conf  # @UnresolvedImport
-import time,json
+import time,json,jwt
 
 ##clase de llamado para validar datos desde labels
 class DatosPerfil(Form):
