@@ -81,6 +81,16 @@ class Usuarios(Resource):
                                     + prmtrs +
                                     " order by "\
                                     " b.lgn")
+            print(" select "\
+                                    " a.id, b.lgn, b.nmbre_usro, b.fto_usro, case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo  "\
+                                    " from "\
+                                    " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
+                                    " a.id_lgn = b.id "\
+                                    " where "\
+                                    " a.estdo = true "\
+                                    + prmtrs +
+                                    " order by "\
+                                    " b.lgn")
             if Cursor :    
                 data = json.loads(json.dumps(Cursor, indent=2))
                 return Utils.nice_json(data,200)
@@ -137,6 +147,9 @@ class Usuarios(Resource):
             ''' 
             arrayValues['id']=str(id_lgn)
             self.UsuarioActualizaRegistro(arrayValues,'tblogins')
+            
+            ##Inserto la relación en la tabla GE
+            self.UsuarioInsertaRegistro(arrayValues3,'tblogins_ge')
             
             return Utils.nice_json({"error":labels.SCCSS_RGSTRO_EXTSO},200)
             '''

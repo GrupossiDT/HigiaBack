@@ -98,7 +98,7 @@ class ValidacionSeguridad(Resource):
                              " crgo.dscrpcn as crgo, " \
                              " lgn.fto_usro as fto_usro, "\
                              " emplds_une.id_undd_ngco as id_undd_ngco, "\
-                             " undd_ngco.id_grpo_emprsrl as id_grpo_emprsrl "
+                             " lgn_ge.id_grpo_emprsrl as id_grpo_emprsrl "
                              " from ssi7x.tblogins_ge lgn_ge " \
                              " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn " \
                              " left join ssi7x.tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id " \
