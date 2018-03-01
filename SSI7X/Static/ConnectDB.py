@@ -82,16 +82,32 @@ class ConnectDB():
         
         if clause != NULL:
             strQuery +=" WHERE " +clause
+            
+        print(strQuery)
         try:   
             self.connet()   
             cur = self.myconn.cursor()
             cur.execute(strQuery) 
             self.myconn.commit()
             self.disconnet()
+            
             return True
         except psycopg2.OperationalError as e:
             return False
-        
+    
+    
+    def queryUpdateFree(self,strUpdate):
+        try:   
+            self.connet()   
+            cur = self.myconn.cursor()
+            cur.execute(strUpdate) 
+            self.myconn.commit()
+            self.disconnet()
+            
+            return True
+        except psycopg2.OperationalError as e:
+            return False
+    
     def queryDelete(self,table,clause = NULL):
         try:
             strQuery ="DELETE FROM "+ table

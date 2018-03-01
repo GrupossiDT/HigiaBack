@@ -29,3 +29,5 @@ ERR_NO_IMGN_GRDDA = 'No se pudo guardar la imagen'
 ERR_NO_ARCVO_DFNDO = 'No se ha definido el archivo a subir'
 ERR_RGSTRO_RPTDO='repetido, por favor verifique.'
 ERR_NO_INGSA_NMBRE_USRO='Debe ingresar el nombre de usuario'
+ERR_TOKEN_ACTIVO ="Ya existe una session activa para este usuario, debe cerrarla"
+ERR_NO_LOGOUT="No se pudo cerrar la session"

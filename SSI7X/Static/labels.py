@@ -19,3 +19,4 @@ WRNNG_CDDO='¡Cuidado! Es muy importante que leas este mensaje de alerta.'
 INFO_ATNCN='¡Atento! Este mensaje requiere de tu atención, aunque no es tan importante.'
 SCCSS_ACTLZCN_EXTSA= 'Actualizacion exitosa'
 INFO_NO_DTS ='¡Sin Datos En la Consulta!'
+LOGOUT="Bye"
