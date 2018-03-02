@@ -3,6 +3,10 @@ Created on 24 ene. 2018
 
 @author: oscar.daza
 '''
+
+
+import time, json, jwt
+
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField
 from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
