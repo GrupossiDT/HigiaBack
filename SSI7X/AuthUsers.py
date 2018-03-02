@@ -101,7 +101,7 @@ class AutenticacionUsuarios(Resource):
         u = UsuarioAcceso(request.form)
         
         if not u.validate():
-            return Utils.nice_json({"error":u.errors}, 400)
+            return Utils.nice_json({labels.lbl_stts_error:u.errors}, 400)
         IpUsuario = IP(socket.gethostbyname(socket.gethostname()))
         if IpUsuario.iptype() == 'PUBLIC':
             md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest() 
@@ -121,7 +121,7 @@ class AutenticacionUsuarios(Resource):
                     ingreso = True                  
                 else:
                     error = str(validacionSeguridad.validaUsuario(request.form['username']))
-                    return Utils.nice_json({"error":error}, 400)    
+                    return Utils.nice_json({labels.lbl_stts_error:error}, 400)    
             else:
                 ingreso                 
                 
@@ -149,14 +149,14 @@ class AutenticacionUsuarios(Resource):
             if self.InsertGestionAcceso(arrayValues) :
                 response = make_response('{"access_token":"' + key + '","cookie_higia":' + str(_cookie_data) + '}', 200)
             else:
-                response = make_response('{"error":"' + errors.ERR_TOKEN_ACTIVO+ '"}', 400)
+                response = make_response('{'+ labels.lbl_stts_error+':"' + errors.ERR_TOKEN_ACTIVO+ '"}', 400)
                 
                 response.headers['Content-type'] = "application/json"
                 response.headers['charset'] = "utf-8"
                 response.headers["Access-Control-Allow-Origin"] = "*"
             return response
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_USRO_CNTSN_INVLD}, 400)
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_USRO_CNTSN_INVLD}, 400)
    
     def MenuDefectoUsuario(self):
         key = request.headers['Authorization']
@@ -184,12 +184,12 @@ class AutenticacionUsuarios(Resource):
                     data = json.loads(json.dumps(Cursor, indent=2))
                     return Utils.nice_json(data, 200)
                 else:
-                    return Utils.nice_json({"error":errors.ERR_NO_USRO_SN_MNU}, 400)
+                    return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_USRO_SN_MNU}, 400)
             else:
-                return Utils.nice_json({"error":errors.ERR_NO_SN_SSN}, 400)
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_SN_SSN}, 400)
             
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_SN_PRMTRS}, 400)
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_SN_PRMTRS}, 400)
         
     def CmboCntrsna(self):
         u = UsroCmbioCntrsna(request.form)
@@ -214,14 +214,13 @@ class AutenticacionUsuarios(Resource):
                 else:
                     return Utils.nice_json({"fto_usro":"null"}, 200)
             else:
-                return Utils.nice_json({"error":errors.ERR_NO_TNE_PRFL, lc_prtcl.scheme + '://' + "fto_usro":conf.SV_HOST + ':' + str(conf.SV_PORT) + '/static/img/' + data['fto_usro']}, 200)
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_TNE_PRFL, lc_prtcl.scheme + '://' + "fto_usro":conf.SV_HOST + ':' + str(conf.SV_PORT) + '/static/img/' + data['fto_usro']}, 200)
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_TNE_PRMTDO_ACCDR}, 400)
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_TNE_PRMTDO_ACCDR}, 400)
         
     def InsertGestionAcceso(self, objectValues):
         #Verifica si el usuario tiene una session abierta sino la tiene la inserta
         Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA + ".tbgestion_accesos","id","id_lgn_ge="+objectValues["id_lgn_ge"] +" AND estdo = true" )
-        print(Cursor)
         if not Cursor:
             lc_cnctn.queryInsert(dbConf.DB_SHMA + ".tbgestion_accesos", objectValues)
             return True
