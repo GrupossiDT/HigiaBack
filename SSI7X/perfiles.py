@@ -44,12 +44,9 @@ class Perfiles(Resource):
         lob_rspsta = DatosPerfil(request.form)
         if not lob_rspsta.validate(): 
             return self.Utils.nice_json({"error":lob_rspsta.errors},400)
-        
         ln_opcn_mnu = request.form["id_mnu_ge"]
         token = request.headers['Authorization']
-        validacionSeguridad = ValidacionSeguridad()
-        
-        
+        validacionSeguridad = ValidacionSeguridad()      
         if validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
             DatosUsuarioToken = jwt.decode(token, conf.SS_TKN_SCRET_KEY, 'utf-8')
             datosUsuario = validacionSeguridad.ObtenerDatosUsuario(DatosUsuarioToken['lgn'])[0]
