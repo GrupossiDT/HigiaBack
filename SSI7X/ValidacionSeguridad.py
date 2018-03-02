@@ -14,7 +14,7 @@ from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
 from SSI7X.Static.Utils import Utils  # @UnresolvedImport
 import SSI7X.Static.config as conf  # @UnresolvedImport
 import SSI7X.Static.errors as errors  # @UnresolvedImport
-import SSI7X.Static.config_DB as confDB
+import SSI7X.Static.config_DB as confDB # @UnresolvedImport
 
 # clase para manejo de permisos por usuario menu 
 class ValidacionSeguridad(Resource):
@@ -61,7 +61,7 @@ class ValidacionSeguridad(Resource):
      
     def ValidacionToken(self, key):
         try:
-            token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"'")[0]
+            token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
             print( token["token"])
             decode = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
             return True

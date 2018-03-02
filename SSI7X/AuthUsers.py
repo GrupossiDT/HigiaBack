@@ -149,7 +149,7 @@ class AutenticacionUsuarios(Resource):
             if self.InsertGestionAcceso(arrayValues) :
                 response = make_response('{"access_token":"' + key + '","cookie_higia":' + str(_cookie_data) + '}', 200)
             else:
-                response = make_response('{"error":"' + errors.ERR_TOKEN_ACTIVO+ '}', 400)
+                response = make_response('{"error":"' + errors.ERR_TOKEN_ACTIVO+ '"}', 400)
                 
                 response.headers['Content-type'] = "application/json"
                 response.headers['charset'] = "utf-8"
@@ -164,7 +164,7 @@ class AutenticacionUsuarios(Resource):
         if key:
             validacionSeguridad.ValidacionToken(key) 
             if validacionSeguridad :
-                token =lc_cnctn.querySelect(dbConf.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"'")[0]
+                token =lc_cnctn.querySelect(dbConf.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
                 DatosUsuario = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
                 id_lgn_prfl_scrsl = validacionSeguridad.validaUsuario(DatosUsuario['lgn'])
                 
