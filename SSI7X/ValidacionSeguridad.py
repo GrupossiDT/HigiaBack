@@ -22,11 +22,9 @@ class ValidacionSeguridad(Resource):
     C = ConnectDB()
 
     def Principal(self, key, id_mnu_ge, sttc_mnu):
-        print(key)
         if not key and id_mnu_ge:
             return False
-        token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"'")[0]
-        
+        token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
         DatosUsuario = jwt.decode(token['token'], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
         
         if DatosUsuario:
@@ -62,7 +60,6 @@ class ValidacionSeguridad(Resource):
     def ValidacionToken(self, key):
         try:
             token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
-            print( token["token"])
             decode = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
             return True
         except jwt.exceptions.ExpiredSignatureError:

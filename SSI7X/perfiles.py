@@ -21,6 +21,7 @@ import time,json,jwt
 Utils = Utils()
 lc_cnctn = ConnectDB()
 fecha_act = time.ctime()
+validacionSeguridad = ValidacionSeguridad()
 
 #clase de llamado para validar datos desde labels
 class DatosPerfil(Form):
@@ -44,42 +45,44 @@ class Perfiles(Resource):
             return self.actualizar()
     
     def crear(self):
-        lob_rspsta = DatosPerfil(request.form)
-        if not lob_rspsta.validate(): 
-            return self.Utils.nice_json({"error":lob_rspsta.errors},400)
-        
+        key = request.headers['Authorization']
         ln_opcn_mnu = request.form["id_mnu_ge"]
         ln_id_undd_ngco = request.form["id_undd_ngco"]
-        token = request.headers['Authorization']
-        validacionSeguridad = ValidacionSeguridad()
-        
-        
-        if validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
-            DatosUsuarioToken = jwt.decode(token, conf.SS_TKN_SCRET_KEY, 'utf-8')
-            datosUsuario = validacionSeguridad.ObtenerDatosUsuario(DatosUsuarioToken['lgn'])[0]
-            arrayValues={}
-            arrayValues['cdgo'] = request.form["cdgo"]
-            arrayValues['dscrpcn'] = request.form["dscrpcn"]
-            ##validacion de datos repetidos
-            Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles', 'cdgo', "cdgo='"+str(arrayValues['cdgo'])+"' or dscrpcn like '%"+str(arrayValues['dscrpcn'])+"%' ")
-            if Cursor :
-                return Utils.nice_json({"error":errors.ERR_RGSTRO_RPTDO},400)
-                        
-            ln_id_prfl =  lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles", arrayValues,'id')
-            if ln_id_prfl:
-                arrayValuesDetalle={}
-                arrayValuesDetalle['id_prfl'] = str(ln_id_prfl)
-                arrayValuesDetalle['id_undd_ngco'] = str(ln_id_undd_ngco)
-                arrayValuesDetalle['id_lgn_crcn_ge'] = str(datosUsuario['id_lgn_ge'])
-                arrayValuesDetalle['id_lgn_mdfccn_ge'] = str(datosUsuario['id_lgn_ge'])  
-                arrayValuesDetalle['fcha_mdfccn'] = str(self.fecha_act)
-                arrayValuesDetalle['fcha_mdfccn'] = str(self.fecha_act)
-                ln_id_prfl_une = self.lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles_une", arrayValuesDetalle,'id')
-                return Utils.nice_json({"success":labels.SCCSS_RGSTRO_EXTSO,"id":str(ln_id_prfl_une)},200)
-            else:    
-                return Utils.nice_json({"error":errors.ERR_PRBLMS_GRDR},400)      
+        if key:
+            validacionSeguridad.ValidacionToken(key)
+            if validacionSeguridad :
+                token =lc_cnctn.querySelect(dbConf.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
+                DatosUsuarioToken = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
+                if validacionSeguridad.Principal(key,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
+                    datosUsuario = validacionSeguridad.ObtenerDatosUsuario(DatosUsuarioToken['lgn'])[0]
+                    arrayValues={}
+                    arrayValues['cdgo'] = request.form["cdgo"]
+                    arrayValues['dscrpcn'] = request.form["dscrpcn"]
+                    ##validacion de datos repetidos
+                    Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles', 'cdgo', "cdgo='"+str(arrayValues['cdgo'])+"' or dscrpcn like '%"+str(arrayValues['dscrpcn'])+"%' ")
+                    if Cursor :
+                        return Utils.nice_json({"error":errors.ERR_RGSTRO_RPTDO},400)
+                       
+                    ln_id_prfl =  lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles", arrayValues,'id')
+                    if ln_id_prfl:
+                        arrayValuesDetalle={}
+                        arrayValuesDetalle['id_prfl'] = str(ln_id_prfl)
+                        arrayValuesDetalle['id_undd_ngco'] = str(ln_id_undd_ngco)
+                        arrayValuesDetalle['id_lgn_crcn_ge'] = str(datosUsuario['id_lgn_ge'])
+                        arrayValuesDetalle['id_lgn_mdfccn_ge'] = str(datosUsuario['id_lgn_ge'])  
+                        arrayValuesDetalle['fcha_mdfccn'] = str(fecha_act)
+                        ln_id_prfl_une = lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles_une", arrayValuesDetalle,'id')
+                        return Utils.nice_json({"success":labels.SCCSS_RGSTRO_EXTSO,"id":str(ln_id_prfl_une)},200)
+                    else:    
+                        return Utils.nice_json({"error":errors.ERR_PRBLMS_GRDR},400) 
+                else:
+                    return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)
+            else:
+                return Utils.nice_json({"error":errors.ERR_NO_SN_SSN}, 400)
+            
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)       
+            return Utils.nice_json({"error":errors.ERR_NO_SN_PRMTRS}, 400)
+
         
     def listar(self):
         

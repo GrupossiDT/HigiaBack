@@ -162,7 +162,7 @@ class AutenticacionUsuarios(Resource):
         key = request.headers['Authorization']
        
         if key:
-            validacionSeguridad.ValidacionToken(key) 
+            validacionSeguridad.ValidacionToken(key)
             if validacionSeguridad :
                 token =lc_cnctn.querySelect(dbConf.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
                 DatosUsuario = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
