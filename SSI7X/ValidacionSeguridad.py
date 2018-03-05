@@ -24,9 +24,7 @@ class ValidacionSeguridad(Resource):
     def Principal(self, key, id_mnu_ge, sttc_mnu):
         if not key and id_mnu_ge:
             return False
-        token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
-        DatosUsuario = jwt.decode(token['token'], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
-        
+        DatosUsuario =  self.ValidacionToken(key)
         if DatosUsuario:
             if int(sttc_mnu) == int(id_mnu_ge):
                 lo_datos = self.validaUsuario(DatosUsuario['lgn'])
@@ -61,9 +59,9 @@ class ValidacionSeguridad(Resource):
         try:
             token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
             decode = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
-            return True
+            return decode
         except jwt.exceptions.ExpiredSignatureError:
-            return  False     
+            return  None     
     
     def ValidaOpcionMenu(self, id_lgn_prfl_scrsl, id_mnu_ge):
             Cursor = self.C.queryFree(" select a.id "\
