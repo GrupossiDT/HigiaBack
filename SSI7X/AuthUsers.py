@@ -162,7 +162,7 @@ class AutenticacionUsuarios(Resource):
         key = request.headers['Authorization']
        
         if key:
-            validacionSeguridad.ValidacionToken(key) 
+            validacionSeguridad.ValidacionToken(key)
             if validacionSeguridad :
                 token =lc_cnctn.querySelect(dbConf.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
                 DatosUsuario = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
@@ -221,7 +221,6 @@ class AutenticacionUsuarios(Resource):
     def InsertGestionAcceso(self, objectValues):
         #Verifica si el usuario tiene una session abierta sino la tiene la inserta
         Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA + ".tbgestion_accesos","id","id_lgn_ge="+objectValues["id_lgn_ge"] +" AND estdo = true" )
-        print(Cursor)
         if not Cursor:
             lc_cnctn.queryInsert(dbConf.DB_SHMA + ".tbgestion_accesos", objectValues)
             return True

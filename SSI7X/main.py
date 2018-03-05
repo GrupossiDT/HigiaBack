@@ -6,7 +6,7 @@ from SSI7X.AuthUsers import AutenticacionUsuarios  # @UnresolvedImport
 from SSI7X.perfiles import Perfiles # @UnresolvedImport
 from SSI7X.Users import Usuarios # @UnresolvedImport
 from SSI7X.preguntas import Preguntas# @UnresolvedImport
-
+from SSI7X.menu import Menu# @UnresolvedImport
 
 
 
@@ -26,12 +26,11 @@ api.add_resource(AutenticacionUsuarios,'/auth/<page>')
 api.add_resource(Perfiles,'/perfiles/<page>')
 api.add_resource(Preguntas,'/preguntasSg/<page>')
 api.add_resource(Usuarios,'/users/<page>')
+api.add_resource(Menu,'/menu/<page>')
 
 
 if __name__ == '__main__':
     app.register_blueprint(auth)
     app.register_blueprint(images)
-    app.config["SESSION_COOKIE_NAME"]="python_session"
-    app.config["SESSION_COOKIE_HTTPONLY"]=False
     app.secret_key = conf.SS_TKN_SCRET_KEY 
     app.run( conf.SV_HOST,conf.SV_PORT,conf.ST_DEBUG)

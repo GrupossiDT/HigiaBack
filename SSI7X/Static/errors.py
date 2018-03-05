@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #Errores controlados del sistema
 ERR_NO_CMNQS_ADMNSTDR_STMA = "comuníquese con el administrador del sistema."
 ERR_NO_USRO_CNTSN_INVLD = 'Usuario o Contraseña Invalida'
@@ -17,7 +19,7 @@ ERR_NO_USRO_SN_MNU = 'Su Usuario No Cuenta con un Menu Asignado '+ERR_NO_CMNQS_A
 ERR_NO_SN_MNU_ASGNDO = 'Su Usuario No Cuenta con un Menu Asignado '+ERR_NO_CMNQS_ADMNSTDR_STMA
 ERR_NO_Cdgo = 'Codigo Debe Contener Datos' 
 ERR_NO_Dscrpcn = 'Descripcion Debe Contener Datos'
-ERR_NO_NOBRE = 'Debe ingresar Ssu nombre'
+ERR_NO_NOBRE = 'Debe ingresar Su nombre'
 ERR_NO_FTO = 'Debe ingresar una foto'
 ERR_NO_ID  = 'ID Es Dato Obligatorio'
 ERR_NO_RGSTRS = 'No hay registros para mostrar'
@@ -29,5 +31,7 @@ ERR_NO_IMGN_GRDDA = 'No se pudo guardar la imagen'
 ERR_NO_ARCVO_DFNDO = 'No se ha definido el archivo a subir'
 ERR_RGSTRO_RPTDO='repetido, por favor verifique.'
 ERR_NO_INGSA_NMBRE_USRO='Debe ingresar el nombre de usuario'
-ERR_TOKEN_ACTIVO ="Ya existe una session activa para este usuario, debe cerrarla"
-ERR_NO_LOGOUT="No se pudo cerrar la session"
+ERR_TOKEN_ACTIVO ='Ya existe una session activa para este usuario, debe cerrarla'
+ERR_NO_LOGOUT='No se pudo cerrar la session'
+ERR_PRBLMS_GRDR= 'Problemas al Guardar Datos Verifique'
+ERR_NO_ORDN = 'Debe Ingresar un Orden para el Menu'

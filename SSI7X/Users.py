@@ -14,7 +14,6 @@ import time,hashlib,json #@UnresolvedImport
 from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
 from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
-from cProfile import label
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
