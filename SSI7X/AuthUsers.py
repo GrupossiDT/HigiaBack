@@ -149,7 +149,7 @@ class AutenticacionUsuarios(Resource):
             if self.InsertGestionAcceso(arrayValues) :
                 response = make_response('{"access_token":"' + key + '","cookie_higia":' + str(_cookie_data) + '}', 200)
             else:
-                response = make_response('{'+ labels.lbl_stts_error+':"' + errors.ERR_TOKEN_ACTIVO+ '"}', 400)
+                response = make_response('{"'+ labels.lbl_stts_error+'":"' + errors.ERR_TOKEN_ACTIVO+ '"}', 400)
                 
                 response.headers['Content-type'] = "application/json"
                 response.headers['charset'] = "utf-8"
