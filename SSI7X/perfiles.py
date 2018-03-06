@@ -87,10 +87,10 @@ class Perfiles(Resource):
     def listar(self):
         
         ln_opcn_mnu = request.form["id_mnu_ge"]
-        token = request.headers['Authorization']
+        key = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
         
-        if validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
+        if validacionSeguridad.Principal(key,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
             lc_dta = ''
             lc_cdgo  =''
             try:
@@ -153,7 +153,7 @@ class Perfiles(Resource):
             arrayValuesDetalle={}
             #Actualizo tabla une
             arrayValuesDetalle['id_lgn_mdfccn_ge']  =  str(datosUsuario['id_lgn_ge'])  
-            arrayValuesDetalle['estdo']             =  lb_estdo            
+            arrayValuesDetalle['estdo']             =  True  if lb_estdo == 'ACTIVO' else False            
             arrayValuesDetalle['fcha_mdfccn']       =  str(self.fecha_act)               
             lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles_une'), arrayValuesDetalle,'id='+str(ln_id_prfl_une))
             #obtengo id_lgn a partir del id_lgn_ge

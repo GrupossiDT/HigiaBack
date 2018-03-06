@@ -205,6 +205,9 @@ class Usuarios(Resource):
             la_clmns_actlzr['lgn']=request.form['login']
             la_clmns_actlzr['cntrsna']=md5 #pendiente encriptar la contraseña
             la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
+            lb_estdo    = request.form["estdo"]
+            la_clmns_actlzr['estdo']= True  if lb_estdo == 'ACTIVO' else False
+            
             '''
             Validar repetidos
             ''' 
