@@ -14,7 +14,6 @@ import time,hashlib,json #@UnresolvedImport
 from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
 from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
-from cProfile import label
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
@@ -23,7 +22,6 @@ validacionSeguridad = ValidacionSeguridad()
 class ActualizarAcceso(Form):
     id_login_ge = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_SN_PRMTRS)])
     login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)]) 
-    password = StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_INGRSA_CNTRSNA)])
     nombre_usuario = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_INGSA_NMBRE_USRO)])
 
 
@@ -115,6 +113,7 @@ class Usuarios(Resource):
         u = AcInsertarAcceso(request.form)
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
+            #Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200) 
         
         if val:
             '''
