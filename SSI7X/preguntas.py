@@ -18,6 +18,7 @@ import SSI7X.Static.errors as errors  # @UnresolvedImport
 import SSI7X.Static.labels as labels  # @UnresolvedImport
 import SSI7X.Static.opciones_higia as optns  # @UnresolvedImport
 from SSI7X.ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
+from pip._vendor.webencodings.labels import LABELS
 
 '''
     Declaracion de variables globales
@@ -124,10 +125,12 @@ class Preguntas(Resource):
             # validacion para evitar registros duplicados 
             Cursor1 = Pconnection.querySelect(dbConf.DB_SHMA +'.tbpreguntas_seguridad', 'cdgo', "cdgo='"+str(a_prgnta['cdgo'])+"'")
             Cursor2 = Pconnection.querySelect(dbConf.DB_SHMA +'.tbpreguntas_seguridad', 'dscrpcn', "dscrpcn ='"+str(a_prgnta['dscrpcn'])+"'")
-            if Cursor1 :
-                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_cdgo+" "+errors.ERR_RGSTRO_RPTDO},400)
-            if Cursor2 :
+            if Cursor1 and Cursor2:
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_cdgo+" y "+labels.lbl_prgnta+" "+errors.ERR_RGSTRO_RPTDO},400)
+            elif Cursor2 :
                 return Utils.nice_json({labels.lbl_stts_error:labels.lbl_prgnta+" "+errors.ERR_RGSTRO_RPTDO},400)
+            elif Cursor1 :
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_cdgo+" "+errors.ERR_RGSTRO_RPTDO},400)
             ln_id_prgnta = self.crearPregunta_seguridad(a_prgnta, 'tbpreguntas_seguridad')
             a_prgnta_ge['id_prgnta_sgrdd'] = str(ln_id_prgnta)
             a_prgnta_ge['id_lgn_crcn_ge'] = str(lc_datosUsuario['id_lgn_ge'])
@@ -230,15 +233,18 @@ class Preguntas(Resource):
             a_prgnta_ge['id_lgn_mdfccn_ge'] = str(lc_datosUsuario['id_lgn_ge'])
             a_prgnta['cdgo'] = request.form['lc_cdgo']
             a_prgnta['dscrpcn'] = request.form['lc_dscrpcn']
-            a_prgnta['estdo']= True  if lb_estdo == 'ACTIVO' else False
+            a_prgnta['estdo']= 'True'  if lb_estdo == 'ACTIVO' else 'False'
             a_prgnta['fcha_mdfccn'] = str(ld_fcha_actl)
             a_prgnta['id_lgn_mdfccn_ge'] = str(lc_datosUsuario['id_lgn_ge'])
-            Cursor1 = Pconnection.querySelect(dbConf.DB_SHMA +'.tbpreguntas_seguridad', 'cdgo', "cdgo='"+str(a_prgnta['cdgo'])+"'")
-            Cursor2 = Pconnection.querySelect(dbConf.DB_SHMA +'.tbpreguntas_seguridad', 'dscrpcn', "dscrpcn ='"+str(a_prgnta['dscrpcn'])+"'")
-            if Cursor1 :
-                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_cdgo+" "+errors.ERR_RGSTRO_RPTDO},400)
-            if Cursor2 :
-                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_prgnta+" "+errors.ERR_RGSTRO_RPTDO},400)
+            #validacion duplicados
+            lc_tbls_query = dbConf.DB_SHMA+".tbpreguntas_seguridad_ge a INNER JOIN "+dbConf.DB_SHMA+".tbpreguntas_seguridad b on a.id_prgnta_sgrdd=b.id "
+            CursorValidar1 = Pconnection.querySelect(lc_tbls_query, ' b.id ', " a.id <>'"+str(a_prgnta_ge['id'])+"' and b.cdgo ='"+str(a_prgnta['cdgo'])+"'")
+            CursorValidar2 = Pconnection.querySelect(lc_tbls_query, ' b.id ', " a.id <>'"+str(a_prgnta_ge['id'])+"' and b.dscrpcn= '"+str(a_prgnta['dscrpcn'])+"' ")
+            if CursorValidar1:
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400) 
+            if CursorValidar2:
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400) 
+                       
             self.PreguntaActualizaRegistro(a_prgnta_ge, 'tbpreguntas_seguridad_ge')
             # obtengo id_prgnta a partir del id
             Cursor = Pconnection.querySelect(dbConf.DB_SHMA + '.tbpreguntas_seguridad_ge', 'id_prgnta_sgrdd', "id=" + str(request.form['ln_id_prgnta_ge']))
