@@ -46,6 +46,9 @@ class Perfiles(Resource):
     
     def crear(self):
         key = request.headers['Authorization']
+        lob_rspsta = DatosPerfil(request.form)
+        if not lob_rspsta.validate(): 
+            return self.Utils.nice_json({"error":lob_rspsta.errors},400)
         ln_opcn_mnu = request.form["id_mnu_ge"]
         ln_id_undd_ngco = request.form["id_undd_ngco"]
         if key:
@@ -79,7 +82,6 @@ class Perfiles(Resource):
                     return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)
             else:
                 return Utils.nice_json({"error":errors.ERR_NO_SN_SSN}, 400)
-            
         else:
             return Utils.nice_json({"error":errors.ERR_NO_SN_PRMTRS}, 400)
 
