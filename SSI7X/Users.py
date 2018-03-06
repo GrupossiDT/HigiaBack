@@ -83,7 +83,7 @@ class Usuarios(Resource):
                                     " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
                                     " a.id_lgn = b.id "\
                                     " where "\
-                                    " a.estdo = true "\
+                                    " a.id_grpo_emprsrl = "+ln_id_grpo_emprsrl+" "\
                                     + lc_prmtrs +
                                     " order by "\
                                     " b.lgn")
@@ -184,6 +184,11 @@ class Usuarios(Resource):
         lc_tkn = request.headers['Authorization']
         ld_fcha_actl = time.ctime()
         ln_opcn_mnu = request.form["id_mnu_ge"]
+        lc_estdo = request.form["estdo"]
+        
+       
+        
+        
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
         #Validar los campos requeridos.
@@ -191,8 +196,6 @@ class Usuarios(Resource):
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
         if val :
-            md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
-            
             '''
                 INSERTAR DATOS
             '''
@@ -202,9 +205,15 @@ class Usuarios(Resource):
             la_clmns_actlzr_ge['id']=request.form['id_login_ge']
             la_clmns_actlzr_ge['fcha_mdfccn']=str(ld_fcha_actl)
             la_clmns_actlzr_ge['id_grpo_emprsrl']=request.form['id_grpo_emprsrl']
+            la_clmns_actlzr_ge['estdo'] = lc_estdo
             la_clmns_actlzr['lgn']=request.form['login']
-            la_clmns_actlzr['cntrsna']=md5 #pendiente encriptar la contraseña
+            
             la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
+            
+            if request.form['password']:
+                md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
+                la_clmns_actlzr['cntrsna']=md5 
+                
             '''
             Validar repetidos
             ''' 
@@ -225,15 +234,16 @@ class Usuarios(Resource):
             #Actualizo tabla principal
             la_clmns_actlzr['id']=ln_id_lgn
             
-            '''
-            Guardar la imagen en la ruta especificada
-            '''
-            lc_nmbre_imgn = str(hashlib.md5(str(la_clmns_actlzr['id']).encode('utf-8')).hexdigest())+'.jpg'
-            la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
-            if la_grdr_archvo['status']=='error':
-                return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400) 
-            else:
-                la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"]) 
+            if request.files:
+                '''
+                Guardar la imagen en la ruta especificada
+                '''
+                lc_nmbre_imgn = str(hashlib.md5(str(la_clmns_actlzr['id']).encode('utf-8')).hexdigest())+'.jpg'
+                la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
+                if la_grdr_archvo['status']=='error':
+                    return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400) 
+                else:
+                    la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"]) 
             
             #ACTUALIZACION TABLA LOGINS OK
             self.UsuarioActualizaRegistro(la_clmns_actlzr,'tblogins')
