@@ -59,10 +59,18 @@ class Perfiles(Resource):
             arrayValues={}
             arrayValues['cdgo'] = request.form["cdgo"]
             arrayValues['dscrpcn'] = request.form["dscrpcn"]
-            ##validacion de datos repetidos
-            Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles', 'cdgo', "cdgo='"+str(arrayValues['cdgo'])+"' or dscrpcn like '%"+str(arrayValues['dscrpcn'])+"%' ")
-            if Cursor :
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400)
+            
+            # validacion para evitar registros duplicados, se verifica que el codigo y la descripcion no existan en otros registros
+            Cursor1 = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles', 'cdgo', "cdgo='"+str(arrayValues['cdgo'])+"'")
+            Cursor2 = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles', 'dscrpcn', "dscrpcn ='"+ arrayValues['dscrpcn']+"'")
+            
+            if Cursor1 and Cursor2:
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_cdgo_prfl +"  "+ labels.lbl_dscrpcn_prfl+" "+errors.ERR_RGSTRO_RPTDO},400)
+            if Cursor1 :
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_cdgo_prfl+" "+errors.ERR_RGSTRO_RPTDO},400)
+            if Cursor2 :
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_dscrpcn_prfl+" "+errors.ERR_RGSTRO_RPTDO},400)
+            
                         
             ln_id_prfl =  lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles", arrayValues,'id')
             if ln_id_prfl:
@@ -71,9 +79,9 @@ class Perfiles(Resource):
                 arrayValuesDetalle['id_undd_ngco'] = str(ln_id_undd_ngco)
                 arrayValuesDetalle['id_lgn_crcn_ge'] = str(datosUsuario['id_lgn_ge'])
                 arrayValuesDetalle['id_lgn_mdfccn_ge'] = str(datosUsuario['id_lgn_ge'])  
-                arrayValuesDetalle['fcha_mdfccn'] = str(self.fecha_act)
-                arrayValuesDetalle['fcha_mdfccn'] = str(self.fecha_act)
-                ln_id_prfl_une = self.lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles_une", arrayValuesDetalle,'id')
+                arrayValuesDetalle['fcha_crcn'] = str(fecha_act)
+                arrayValuesDetalle['fcha_mdfccn'] = str(fecha_act)
+                ln_id_prfl_une = lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles_une", arrayValuesDetalle,'id')
                 return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_RGSTRO_EXTSO,"id":str(ln_id_prfl_une)},200)
             else:    
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400)      
@@ -134,24 +142,26 @@ class Perfiles(Resource):
             token = validacionSeguridad.ValidacionToken(key)
             datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]    
                             
-            lc_cdgo     = request.form["cdgo"]
-            lc_dscrpcn  = request.form["dscrpcn"]  
-            ln_id_prfl_une = request.form["id_prfl_une"]
-            lb_estdo    = request.form["estdo"]   
+            lc_cdgo         = request.form["cdgo"]
+            lc_dscrpcn      = request.form["dscrpcn"]  
+            ln_id_prfl_une  = request.form["id_prfl_une"]
+            lb_estdo        = request.form["estdo"]
+            ln_id_undd_ngco = request.form['id_undd_ngco']  
             
-            # validacion para evitar registros duplicados, se verifica que el codigo y la descripcion no existan en otros registros
-            lc_tbls_query = dbConf.DB_SHMA + ".tbperfiles_une a INNER JOIN " + dbConf.DB_SHMA + ".tbperfiles b on a.id_prfl=b.id "
-            CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', "a.id <> "+str(ln_id_prfl_une)+"b.cdgo = '" + str(lc_cdgo) + "' or b.dscrpcn like '%" + str(lc_dscrpcn) + "%'")
-            if CursorValidar:
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400)
-                   
-                        
+            lc_tbls_query = dbConf.DB_SHMA+".tbperfiles_une a INNER JOIN "+dbConf.DB_SHMA+".tbperfiles b on a.id_prfl=b.id "
+            CursorValidar1 = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " a.id <>'"+str(ln_id_prfl_une)+"' and b.cdgo ='"+str(lc_cdgo)+"' and a.id_undd_ngco ='"+str(ln_id_undd_ngco)+"'")
+            CursorValidar2 = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " a.id <>'"+str(ln_id_prfl_une)+"' and b.dscrpcn= '"+str(lc_dscrpcn)+"' and a.id_undd_ngco ='"+str(ln_id_undd_ngco)+"'")
+            if CursorValidar1:
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400) 
+            if CursorValidar2:
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400) 
+                
             arrayValues={}
             arrayValuesDetalle={}
             #Actualizo tabla une
             arrayValuesDetalle['id_lgn_mdfccn_ge']  =  str(datosUsuario['id_lgn_ge'])  
             arrayValuesDetalle['estdo']             =  lb_estdo            
-            arrayValuesDetalle['fcha_mdfccn']       =  str(self.fecha_act)               
+            arrayValuesDetalle['fcha_mdfccn']       =  str(fecha_act)               
             lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles_une'), arrayValuesDetalle,'id='+str(ln_id_prfl_une))
             #obtengo id_lgn a partir del id_lgn_ge
             Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles_une', 'id_prfl', "id="+ln_id_prfl_une)
@@ -159,13 +169,14 @@ class Perfiles(Resource):
                 data        = json.loads(json.dumps(Cursor[0], indent=2))
                 ln_id_prfl  = data['id_prfl']
                 #Actualizo tabla principal
-                arrayValues['id']     = ln_id_prfl
                 arrayValues['cdgo']   = str(lc_cdgo)
                 arrayValues['dscrpcn']= lc_dscrpcn            
-                arrayValues['estdo']= True if lb_estdo == 'ACTIVO' else False
-                lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles'), arrayValues,'id='+str(ln_id_prfl))
+                arrayValues['estdo']=  lb_estdo
+                lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles'), arrayValues,'id ='+str(ln_id_prfl))
                 return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200) 
             else:    
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400)
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)       
+        
+        
