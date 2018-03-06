@@ -154,11 +154,11 @@ class Menu(Resource):
     '''
     
     def listar(self): 
-        ln_opcn_mnu = request.form["id_mnu_ge"]
+        ln_opcn_mnu = request.form["id_mnu_ge_opt"]
         ln_id_grpo_emprsrl = request.form["id_grpo_emprsrl"]
-        token = request.headers['Authorization']
+        key = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
-        lb_val = validacionSeguridad.Principal(token, ln_opcn_mnu, optns.OPCNS_MNU['Optmenu'])
+        lb_val = validacionSeguridad.Principal(key, ln_opcn_mnu, optns.OPCNS_MNU['Optmenu'])
         a_prmtrs = {}
         lc_prmtrs = ''
         try:
@@ -184,7 +184,12 @@ class Menu(Resource):
         if lb_val:
         
             StrSql = " select "\
-                                " b.id,a.ordn,a.dscrpcn,a.lnk,a.estdo "\
+                                " a.id_mnu as parent,"\
+                                " b.id,"\
+                                " a.ordn,"\
+                                " a.dscrpcn,"\
+                                "a.lnk,"\
+                                " case when a.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo"\
                                 " from "\
                                 " "+str(dbConf.DB_SHMA)+".tbmenu a inner join "+str(dbConf.DB_SHMA)+".tbmenu_ge b on "\
                                 " a.id=b.id_mnu "\
