@@ -46,24 +46,23 @@ class Perfiles(Resource):
     def crear(self):
         lob_rspsta = DatosPerfil(request.form)
         if not lob_rspsta.validate(): 
-            return self.Utils.nice_json({"error":lob_rspsta.errors},400)
+            return self.Utils.nice_json({labels.lbl_stts_error:lob_rspsta.errors},400)
         
         ln_opcn_mnu = request.form["id_mnu_ge"]
         ln_id_undd_ngco = request.form["id_undd_ngco"]
-        token = request.headers['Authorization']
+        key = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
-        
-        
-        if validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
-            DatosUsuarioToken = jwt.decode(token, conf.SS_TKN_SCRET_KEY, 'utf-8')
-            datosUsuario = validacionSeguridad.ObtenerDatosUsuario(DatosUsuarioToken['lgn'])[0]
+                
+        if validacionSeguridad.Principal(key,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
+            token = validacionSeguridad.ValidacionToken(key)
+            datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]
             arrayValues={}
             arrayValues['cdgo'] = request.form["cdgo"]
             arrayValues['dscrpcn'] = request.form["dscrpcn"]
             ##validacion de datos repetidos
             Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles', 'cdgo', "cdgo='"+str(arrayValues['cdgo'])+"' or dscrpcn like '%"+str(arrayValues['dscrpcn'])+"%' ")
             if Cursor :
-                return Utils.nice_json({"error":errors.ERR_RGSTRO_RPTDO},400)
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400)
                         
             ln_id_prfl =  lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles", arrayValues,'id')
             if ln_id_prfl:
@@ -75,19 +74,19 @@ class Perfiles(Resource):
                 arrayValuesDetalle['fcha_mdfccn'] = str(self.fecha_act)
                 arrayValuesDetalle['fcha_mdfccn'] = str(self.fecha_act)
                 ln_id_prfl_une = self.lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles_une", arrayValuesDetalle,'id')
-                return Utils.nice_json({"success":labels.SCCSS_RGSTRO_EXTSO,"id":str(ln_id_prfl_une)},200)
+                return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_RGSTRO_EXTSO,"id":str(ln_id_prfl_une)},200)
             else:    
-                return Utils.nice_json({"error":errors.ERR_PRBLMS_GRDR},400)      
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400)      
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)       
+            return Utils.nice_json({labels.lbl_stts_success:errors.ERR_NO_ATRZCN},400)       
         
     def listar(self):
         
         ln_opcn_mnu = request.form["id_mnu_ge"]
-        token = request.headers['Authorization']
+        key = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
         
-        if validacionSeguridad.Principal(token,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
+        if validacionSeguridad.Principal(key,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
             lc_dta = ''
             lc_cdgo  =''
             try:
@@ -117,34 +116,35 @@ class Perfiles(Resource):
                 data = json.loads(json.dumps(Cursor, indent=2))
                 return Utils.nice_json(data,200)
             else:
-                return Utils.nice_json({"success":labels.INFO_NO_DTS},200)
+                return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)       
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)       
         
     def actualizar(self):
         
         lob_rspsta = DatosUpdate(request.form)
         if not lob_rspsta.validate(): 
-            return self.Utils.nice_json({"error":lob_rspsta.errors},400)
+            return self.Utils.nice_json({labels.lbl_stts_error:lob_rspsta.errors},400)
         
         ln_opcn_mnu = request.form["id_mnu_ge"]
-        token = request.headers['Authorization']
+        key = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
         
-        if validacionSeguridad.Principal(token, ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
-            DatosUsuarioToken = jwt.decode(token, conf.SS_TKN_SCRET_KEY, 'utf-8')
-            datosUsuario = validacionSeguridad.ObtenerDatosUsuario(DatosUsuarioToken['lgn'])[0]    
+        if validacionSeguridad.Principal(key, ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
+            token = validacionSeguridad.ValidacionToken(key)
+            datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]    
                             
             lc_cdgo     = request.form["cdgo"]
             lc_dscrpcn  = request.form["dscrpcn"]  
             ln_id_prfl_une = request.form["id_prfl_une"]
             lb_estdo    = request.form["estdo"]   
             
-            CursorValidar = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles', 'id'," cdgo = '"+str(lc_cdgo)+"' or dscrpcn like '%"+str(lc_dscrpcn)+"%'")
-            print(CursorValidar)                    
+            # validacion para evitar registros duplicados, se verifica que el codigo y la descripcion no existan en otros registros
+            lc_tbls_query = dbConf.DB_SHMA + ".tbperfiles_une a INNER JOIN " + dbConf.DB_SHMA + ".tbperfiles b on a.id_prfl=b.id "
+            CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', "a.id <> "+str(ln_id_prfl_une)+"b.cdgo = '" + str(lc_cdgo) + "' or b.dscrpcn like '%" + str(lc_dscrpcn) + "%'")
             if CursorValidar:
-                print('dupicado')
-                return Utils.nice_json({"error":errors.ERR_RGSTRO_RPTDO},400)       
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400)
+                   
                         
             arrayValues={}
             arrayValuesDetalle={}
@@ -161,11 +161,11 @@ class Perfiles(Resource):
                 #Actualizo tabla principal
                 arrayValues['id']     = ln_id_prfl
                 arrayValues['cdgo']   = str(lc_cdgo)
-                arrayValues['dscrpcn']= lc_dscrpcn
-                arrayValues['estdo']  = lb_estdo
+                arrayValues['dscrpcn']= lc_dscrpcn            
+                arrayValues['estdo']= True if lb_estdo == 'ACTIVO' else False
                 lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles'), arrayValues,'id='+str(ln_id_prfl))
-                return Utils.nice_json({"success":labels.SCCSS_ACTLZCN_EXTSA},200) 
+                return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200) 
             else:    
-                return Utils.nice_json({"error":errors.ERR_PRBLMS_GRDR},400)
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400)
         else:
-            return Utils.nice_json({"error":errors.ERR_NO_ATRZCN},400)       
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)       
