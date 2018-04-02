@@ -1,6 +1,7 @@
 import json
 from flask import make_response
-from user_agents import parse 
+from user_agents import parse
+from random import randint
 class Utils:
     def nice_json(self,arg, status):
         response = make_response(json.dumps(arg, sort_keys = True, indent=4), status)
@@ -15,3 +16,8 @@ class Utils:
     def DetectarDispositivo(self,str_agente):
         dispositivo_usuario = parse(str_agente)
         return dispositivo_usuario
+      
+    def aleatoria_n_digitos(self,n):
+        range_start = 10**(n-1)
+        range_end = (10**n)-1
+        return randint(range_start, range_end)
