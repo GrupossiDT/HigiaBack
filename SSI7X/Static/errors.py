@@ -35,3 +35,6 @@ ERR_TOKEN_ACTIVO ='Ya existe una session activa para este usuario, debe cerrarla
 ERR_NO_LOGOUT='No se pudo cerrar la session'
 ERR_PRBLMS_GRDR= 'Problemas al Guardar Datos Verifique'
 ERR_NO_ORDN = 'Debe Ingresar un Orden para el Menu'
+ERR_NO_CRRO_SSTMA = 'Este Correo no se encuentra en el Sistema verifique la información e intente de nuevo'
+ERR_NO_CLVE_TMP = "Clave Temporal no se Encuentra en el sistema o Expiró inténtelo de Nuevo"
+ERR_NO_CNCD_CNTSNA = "Las Contraseñas no Coinciden"

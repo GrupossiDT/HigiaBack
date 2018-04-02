@@ -4,16 +4,19 @@
 '''
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField
-import SSI7X.Static.config as conf  # @UnresolvedImport
-from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from SSI7X.Static.Utils import Utils  # @UnresolvedImport
-import SSI7X.Static.errors as errors  # @UnresolvedImport
-import SSI7X.Static.labels as labels  # @UnresolvedImport
-import SSI7X.Static.opciones_higia as optns  # @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
+import Static.errors as errors  # @UnresolvedImport
+import Static.labels as labels  # @UnresolvedImport
+import Static.opciones_higia as optns  # @UnresolvedImport
 import time,hashlib,json #@UnresolvedImport
-from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
-import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
-from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
+from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
+import Static.config_DB as dbConf # @UnresolvedImport
+from Static.UploadFiles import UploadFiles  # @UnresolvedImport
+from mail import correo
+from IPy import IP
+import socket
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
@@ -22,7 +25,6 @@ validacionSeguridad = ValidacionSeguridad()
 class ActualizarAcceso(Form):
     id_login_ge = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_SN_PRMTRS)])
     login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)]) 
-    password = StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_INGRSA_CNTRSNA)])
     nombre_usuario = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_INGSA_NMBRE_USRO)])
 
 
@@ -46,6 +48,16 @@ class Usuarios(Resource):
             return self.InsertarUsuarios()
         elif kwargs['page'] == 'actualizar':
             return self.ActualizarUsuario()
+        elif kwargs['page'] == 'claveTemporal':
+            return self.claveTemporal()
+        elif kwargs['page'] == 'validaClavetemporal':
+            return self.validaclaveTemporal()
+        elif kwargs['page'] == 'actualizarContrasena':
+            return self.actualizarContrasena()        
+        
+        
+        
+        
     
     '''
         @author:Cristian Botina
@@ -84,7 +96,7 @@ class Usuarios(Resource):
                                     " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
                                     " a.id_lgn = b.id "\
                                     " where "\
-                                    " a.estdo = true "\
+                                    " a.id_grpo_emprsrl = "+ln_id_grpo_emprsrl+" "\
                                     + lc_prmtrs +
                                     " order by "\
                                     " b.lgn")
@@ -114,6 +126,7 @@ class Usuarios(Resource):
         u = AcInsertarAcceso(request.form)
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
+            #Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200) 
         
         if val:
             '''
@@ -184,6 +197,11 @@ class Usuarios(Resource):
         lc_tkn = request.headers['Authorization']
         ld_fcha_actl = time.ctime()
         ln_opcn_mnu = request.form["id_mnu_ge"]
+        lc_estdo = request.form["estdo"]
+        
+       
+        
+        
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
         #Validar los campos requeridos.
@@ -191,8 +209,6 @@ class Usuarios(Resource):
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
         if val :
-            md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
-            
             '''
                 INSERTAR DATOS
             '''
@@ -202,12 +218,15 @@ class Usuarios(Resource):
             la_clmns_actlzr_ge['id']=request.form['id_login_ge']
             la_clmns_actlzr_ge['fcha_mdfccn']=str(ld_fcha_actl)
             la_clmns_actlzr_ge['id_grpo_emprsrl']=request.form['id_grpo_emprsrl']
+            la_clmns_actlzr_ge['estdo'] = lc_estdo
             la_clmns_actlzr['lgn']=request.form['login']
-            la_clmns_actlzr['cntrsna']=md5 #pendiente encriptar la contraseña
-            la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
-            lb_estdo    = request.form["estdo"]
-            la_clmns_actlzr['estdo']= True  if lb_estdo == 'ACTIVO' else False
             
+            la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
+            
+            if request.form['password']:
+                md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
+                la_clmns_actlzr['cntrsna']=md5 
+                
             '''
             Validar repetidos
             ''' 
@@ -228,15 +247,16 @@ class Usuarios(Resource):
             #Actualizo tabla principal
             la_clmns_actlzr['id']=ln_id_lgn
             
-            '''
-            Guardar la imagen en la ruta especificada
-            '''
-            lc_nmbre_imgn = str(hashlib.md5(str(la_clmns_actlzr['id']).encode('utf-8')).hexdigest())+'.jpg'
-            la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
-            if la_grdr_archvo['status']=='error':
-                return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400) 
-            else:
-                la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"]) 
+            if request.files:
+                '''
+                Guardar la imagen en la ruta especificada
+                '''
+                lc_nmbre_imgn = str(hashlib.md5(str(la_clmns_actlzr['id']).encode('utf-8')).hexdigest())+'.jpg'
+                la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
+                if la_grdr_archvo['status']=='error':
+                    return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400) 
+                else:
+                    la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"]) 
             
             #ACTUALIZACION TABLA LOGINS OK
             self.UsuarioActualizaRegistro(la_clmns_actlzr,'tblogins')
@@ -274,3 +294,102 @@ class Usuarios(Resource):
             la_rspsta['status']='error'
             la_rspsta['retorno']=errors.ERR_NO_ARCVO_DFNDO
         return la_rspsta
+    def claveTemporal(self):
+        lc_crro_crprtvo = request.form['crro_crprtvo']
+        lc_query_clv_tmp = "select lgn from ( "\
+                                    " select "\
+                                    " case when emplds_une.id is not null then "\
+                                    " emplds.crro_elctrnco "\
+                                    " else "\
+                                    " prstdr.crro_elctrnco "\
+                                    " end as crro_elctrnco,lgn.lgn "\
+                                    " from ssi7x.tblogins_ge lgn_ge "\
+                                    " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn "\
+                                    " left join ssi7x.tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join ssi7x.tbempleados emplds on emplds.id = emplds_une.id_empldo "\
+                                    " left join ssi7x.tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join ssi7x.tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une "\
+                                    " left join ssi7x.tbcargos crgo on crgo.id = crgo_une.id_crgo "\
+                                    " left join ssi7x.tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco "\
+                                    " inner join ssi7x.tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
+                                    " inner join ssi7x.tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
+                                    " where id_mtvo_rtro_une is null) as test "\
+                                     " where crro_elctrnco ='"+lc_crro_crprtvo+"'"
+        Cursor_clv_tmp = lc_cnctn.queryFree(lc_query_clv_tmp)
+        if Cursor_clv_tmp :
+            #validamos que no tenga una clave temporal ya generada al menos 3 intentos en 30 min
+            lc_query = "select "\
+                         "count(estdo) as count "\
+                         "from "\
+                         "ssi7x.tbclaves_tmp "\
+                         "where "\
+                         "current_timestamp - fcha_crcn < INTERVAL '30' minute "\
+                         "and estdo = true "\
+                         "and crreo_slctnte ='"+lc_crro_crprtvo+"'"
+            Cursor = lc_cnctn.queryFree(lc_query)
+            if Cursor:
+                data_vlda = json.loads(json.dumps(Cursor[0], indent=2))
+                if data_vlda['count'] <=3:
+                    try:
+                        #se inserta en la tabla para posterior validacion
+                        arrayValues = {}
+                        ld_fcha_actl = time.ctime()
+                        clave_tmp = Utils.aleatoria_n_digitos(8)
+                        arrayValues['cntrsna'] = str(clave_tmp)
+                        IpUsuario = IP(socket.gethostbyname(socket.gethostname()))
+                        arrayValues['ip'] = str(IpUsuario)
+                        device = Utils.DetectarDispositivo(request.headers.get('User-Agent'))
+                        arrayValues['dspstvo_accso'] = str(device)
+                        arrayValues['crreo_slctnte'] = str(lc_crro_crprtvo)
+                        arrayValues['fcha_mdfccn '] = str(ld_fcha_actl)
+                        lc_cnctn.queryInsert(dbConf.DB_SHMA + ".tbclaves_tmp", arrayValues)
+                        data = json.loads(json.dumps(Cursor_clv_tmp[0], indent=2))
+                        asunto = "Clave Temporal de Acceso Higia SSI"
+        
+                        mensaje =   "Hola "+data['lgn']+" "\
+                                    "<p>La clave temporal auto generada por el sistema estara vigente por 30 minutos</p>"\
+                                    "<br>"\
+                                    "<b>Clave Generada:</b>"+str(clave_tmp)
+                        correo.enviarCorreo(lc_crro_crprtvo,asunto,mensaje)
+                        return Utils.nice_json({labels.lbl_stts_success:'Clave Temporal Generada con Exito! Redireccionando Espera un Momento...'},200)
+                    except Exception:
+                        return Utils.nice_json({labels.lbl_stts_error:'No es posible enviar los datos'},400)
+                else:
+                    return Utils.nice_json({labels.lbl_stts_error:'Ya se encuentra una Clave Generada para el ingreso Revisa tu correo o mensajes de texto intentalo mas tarde'},400)
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CRRO_SSTMA},400)
+        
+        
+    def validaclaveTemporal(self):
+        lc_clve_tmprl = request.form['clve_tmprl']
+        lc_query = "select "\
+        "estdo "\
+        "from "\
+        "ssi7x.tbclaves_tmp "\
+        "where "\
+        "current_timestamp - fcha_crcn < INTERVAL '30' minute "\
+        "and estdo = true "\
+        "and cntrsna ='"+lc_clve_tmprl+"'"
+        Cursor = lc_cnctn.queryFree(lc_query)
+        if Cursor:
+            data_vlda = json.loads(json.dumps(Cursor[0], indent=2))
+            if data_vlda['estdo']:
+                return Utils.nice_json({labels.lbl_stts_success:True},200)
+            else:
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
+        
+    def actualizarContrasena(self):
+        
+        lc_clve_tmprl = request.form['clve_tmprl']
+        lc_nva_cntrsna = request.form['nva_cntrsna']
+        lc_rnva_cntrsna = request.form['rnva_cntrsna']
+        responsed = self.validaclaveTemporal()
+        print(str(responsed.data).encode('utf8'))
+        
+        '''if self.validaclaveTemporal():
+            if lc_nva_cntrsna==lc_rnva_cntrsna:
+                return Utils.nice_json({labels.lbl_stts_success:True},200)
+            else:
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CNCD_CNTSNA},400)'''
