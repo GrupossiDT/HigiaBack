@@ -4,16 +4,16 @@
 '''
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField
-import SSI7X.Static.config as conf  # @UnresolvedImport
-from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from SSI7X.Static.Utils import Utils  # @UnresolvedImport
-import SSI7X.Static.errors as errors  # @UnresolvedImport
-import SSI7X.Static.labels as labels  # @UnresolvedImport
-import SSI7X.Static.opciones_higia as optns  # @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
+import Static.errors as errors  # @UnresolvedImport
+import Static.labels as labels  # @UnresolvedImport
+import Static.opciones_higia as optns  # @UnresolvedImport
 import time,hashlib,json #@UnresolvedImport
-from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
-import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
-from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
+from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
+import Static.config_DB as dbConf # @UnresolvedImport
+from Static.UploadFiles import UploadFiles  # @UnresolvedImport
 from cProfile import label
 
 lc_cnctn = ConnectDB()

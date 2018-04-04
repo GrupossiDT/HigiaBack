@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2.sql import NULL
-import SSI7X.Static.config_DB as mConf  # @UnresolvedImport
+import Static.config_DB as mConf  # @UnresolvedImport
 from psycopg2.extras import RealDictCursor
 
 class ConnectDB():

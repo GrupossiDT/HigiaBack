@@ -19,14 +19,14 @@ from flask_restful import request, Resource
 import jwt  # @UnresolvedImport
 from wtforms import Form, validators, StringField
 
-from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from SSI7X.Static.Ldap_connect import Conexion_ldap  # @UnresolvedImport
-from SSI7X.Static.Utils import Utils  # @UnresolvedImport
-import SSI7X.Static.config as conf  # @UnresolvedImport
-import SSI7X.Static.config_DB as dbConf  # @UnresolvedImport 
-import SSI7X.Static.errors as errors  # @UnresolvedImport
-import SSI7X.Static.labels as labels  # @UnresolvedImport
-from SSI7X.ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Ldap_connect import Conexion_ldap  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport
+import Static.config_DB as dbConf  # @UnresolvedImport 
+import Static.errors as errors  # @UnresolvedImport
+import Static.labels as labels  # @UnresolvedImport
+from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
 
 lc_cnctn = ConnectDB()
 Utils = Utils()

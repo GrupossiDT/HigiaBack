@@ -10,11 +10,11 @@ from _codecs import decode
 from flask_restful import Resource
 import jwt, json  # @UnresolvedImport
 
-from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from SSI7X.Static.Utils import Utils  # @UnresolvedImport
-import SSI7X.Static.config as conf  # @UnresolvedImport
-import SSI7X.Static.errors as errors  # @UnresolvedImport
-import SSI7X.Static.config_DB as confDB # @UnresolvedImport
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport
+import Static.errors as errors  # @UnresolvedImport
+import Static.config_DB as confDB # @UnresolvedImport
 
 # clase para manejo de permisos por usuario menu 
 class ValidacionSeguridad(Resource):
@@ -22,13 +22,9 @@ class ValidacionSeguridad(Resource):
     C = ConnectDB()
 
     def Principal(self, key, id_mnu_ge, sttc_mnu):
-        print(key)
         if not key and id_mnu_ge:
             return False
-        token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"'")[0]
-        
-        DatosUsuario = jwt.decode(token['token'], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
-        
+        DatosUsuario =  self.ValidacionToken(key)
         if DatosUsuario:
             if int(sttc_mnu) == int(id_mnu_ge):
                 lo_datos = self.validaUsuario(DatosUsuario['lgn'])
@@ -62,11 +58,10 @@ class ValidacionSeguridad(Resource):
     def ValidacionToken(self, key):
         try:
             token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
-            print( token["token"])
             decode = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
-            return True
+            return decode
         except jwt.exceptions.ExpiredSignatureError:
-            return  False     
+            return  None     
     
     def ValidaOpcionMenu(self, id_lgn_prfl_scrsl, id_mnu_ge):
             Cursor = self.C.queryFree(" select a.id "\

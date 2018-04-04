@@ -1,11 +1,11 @@
 from flask import Flask, Blueprint
 from flask_cors import CORS
 from flask_restful import Api
-import SSI7X.Static.config as conf  # @UnresolvedImport 
-from SSI7X.AuthUsers import AutenticacionUsuarios  # @UnresolvedImport
-from SSI7X.perfiles import Perfiles # @UnresolvedImport
-from SSI7X.Users import Usuarios # @UnresolvedImport
-from SSI7X.preguntas import Preguntas# @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport 
+from AuthUsers import AutenticacionUsuarios  # @UnresolvedImport
+from perfiles import Perfiles # @UnresolvedImport
+from Users import Usuarios # @UnresolvedImport
+from preguntas import Preguntas# @UnresolvedImport
 
 
 
