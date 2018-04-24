@@ -118,7 +118,7 @@ class Perfiles(Resource):
                                     " a.cdgo ,a.dscrpcn "\
                                     " ,case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo "\
                                     " from "\
-                                    " ssi7x.tbperfiles a inner join  ssi7x.tbperfiles_une b on "\
+                                    " "+dbConf.DB_SHMA+".tbperfiles a inner join "+" "+ dbConf.DB_SHMA+".tbperfiles_une b on "\
                                     " a.id=b.id_prfl "\
                                     " where "\
                                     " b.id_undd_ngco = "+str(ln_id_undd_ngco) +" "+ lc_dta +""\
@@ -197,17 +197,17 @@ class Perfiles(Resource):
 
             strSql ="SELECT * FROM( "\
                     "SELECT m.dscrpcn as text,m.id as id_mnu,m.ordn,(case when p.id is not null then true else false end)::boolean as seleccionado  "\
-                    "FROM (select m.dscrpcn,mg.id,m.ordn from ssi7x.tbmenu m "\
-                    "inner join ssi7x.tbmenu_ge mg on m.id=mg.id_mnu  "\
+                    "FROM (select m.dscrpcn,mg.id,m.ordn from "+" "+dbConf.DB_SHMA+".tbmenu m "\
+                    "inner join" +" "+dbConf.DB_SHMA+".tbmenu_ge mg on m.id=mg.id_mnu  "\
                     "where mg.id_grpo_emprsrl=2 and m.estdo=true and mg.estdo=true  "\
                     ") AS M  "\
                     "left join  "\
                     "(select  "\
-                    "m.dscrpcn,mng.id from ssi7x.tbperfiles as p  "\
-                    "inner join ssi7x.tbperfiles_une as pu on pu.id_prfl= p.id  "\
-                    "inner Join ssi7x.tbperfiles_une_menu as pum ON pu.id= pum.id_prfl_une  "\
-                    "inner join ssi7x.tbmenu_ge mng ON pum.id_mnu_ge = mng.id  "\
-                    "inner join ssi7x.tbmenu m ON m.id = mng.id_mnu  "\
+                    "m.dscrpcn,mng.id from " +" "+dbConf.DB_SHMA+".tbperfiles as p  "\
+                    "inner join " +" "+dbConf.DB_SHMA+".tbperfiles_une as pu on pu.id_prfl= p.id  "\
+                    "inner Join " +" "+dbConf.DB_SHMA+".tbperfiles_une_menu as pum ON pu.id= pum.id_prfl_une  "\
+                    "inner join " +" "+dbConf.DB_SHMA+".tbmenu_ge mng ON pum.id_mnu_ge = mng.id  "\
+                    "inner join " +" "+dbConf.DB_SHMA+".tbmenu m ON m.id = mng.id_mnu  "\
                     "where pu.id="+ln_id_prfl_une+" and pu.id_undd_ngco="+ln_id_undd_ngco+" and mng.id_grpo_emprsrl = 2  "\
                     "and mng.estdo=true and m.estdo=true and pum.estdo=true"\
                     ")as P ON P.id=M.id "\
@@ -253,7 +253,7 @@ class Perfiles(Resource):
                         objectValues["id_lgn_mdfccn_ge"] = str(datosUsuario["id_lgn_ge"])
                         objectValues["fcha_mdfccn"]= str(datetime.datetime.now()).split('.')[0]
                         clause = "id_prfl_une = " + str(ln_id_prfl_une) + " AND id_mnu_ge=" + str(obj["id"])
-                        lc_cnctn.queryUpdate("ssi7x.tbperfiles_une_menu",objectValues,clause)
+                        lc_cnctn.queryUpdate(dbConf.DB_SHMA+".tbperfiles_une_menu",objectValues,clause)
 
                 else:
                     if obj["stdo_envdo"]:
@@ -263,7 +263,7 @@ class Perfiles(Resource):
                         objectValues["id_lgn_crcn_ge"] = str(ln_id_prfl_une)
                         objectValues["id_lgn_mdfccn_ge"] = str(ln_id_prfl_une)
                         objectValues["fcha_mdfccn"] = str(datetime.datetime.now()).split('.')[0]
-                        lc_cnctn.queryInsert("ssi7x.tbperfiles_une_menu",objectValues)
+                        lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles_une_menu",objectValues)
             '''
             if len(lc_query_actlzr) > 0:
                 #print(lc_query_actlzr)
@@ -302,14 +302,14 @@ class Perfiles(Resource):
                 "(case  when actuales.estdo is NULL then false else true end) existe, "\
                 "actuales.estdo,enviados.stdo_envdo from "\
                 "(select "+ str(ln_id_perfil_une)+" as id_prfl_une,id,"+ ls_case +" "\
-                "from ssi7x.tbmenu_ge "\
+                "from " +" "+dbConf.DB_SHMA+".tbmenu_ge "\
                 "where id in("+ls_id_mnu+") and id_grpo_emprsrl="+ str(ln_id_grpo_emprsrl)+""\
                 "group by id "\
                 ") AS enviados "\
                 "left join "\
-                "(select pum.id_prfl_une,pum.id_mnu_ge,pum.estdo from ssi7x.tbperfiles_une_menu pum "\
-                "inner join ssi7x.tbperfiles_une pu on pu.id = pum.id_prfl_une "\
-                "inner join ssi7x.tbmenu_ge mg on mg.id = pum.id_mnu_ge "\
+                "(select pum.id_prfl_une,pum.id_mnu_ge,pum.estdo from " +" "+dbConf.DB_SHMA+".tbperfiles_une_menu pum "\
+                "inner join " +" "+dbConf.DB_SHMA+".tbperfiles_une pu on pu.id = pum.id_prfl_une "\
+                "inner join " +" "+dbConf.DB_SHMA+".tbmenu_ge mg on mg.id = pum.id_mnu_ge "\
                 "where pum.id_mnu_ge in("+ls_id_mnu+") "\
                 "and pum.id_prfl_une = "+ str(ln_id_perfil_une)+" "\
                 "and mg.id_grpo_emprsrl="+ str(ln_id_grpo_emprsrl)+") as actuales "\

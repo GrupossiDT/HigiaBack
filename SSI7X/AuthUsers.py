@@ -128,6 +128,7 @@ class AutenticacionUsuarios(Resource):
         if  ingreso:
             
             tmpData = validacionSeguridad.ObtenerDatosUsuario(request.form['username'])[0]
+            tmpData["id_scrsl"] = validacionSeguridad.validaUsuario(request.form['username'])["id_scrsl"]
             data = json.loads(json.dumps(tmpData, indent=2))
             
             _cookie_data = json.dumps(tmpData, sort_keys=True, indent=4)

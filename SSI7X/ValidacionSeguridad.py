@@ -39,7 +39,8 @@ class ValidacionSeguridad(Resource):
         strQuery = "SELECT "\
                     " a.id as id_prfl_scrsl,"\
                     " b.nmbre_scrsl as nmbre_scrsl,"\
-                    " c.estdo as estdo "\
+                    " c.estdo as estdo ,"\
+                    " b.id as id_scrsl "\
                     " FROM ssi7x.tblogins_perfiles_sucursales a"\
                     " left JOIN  ssi7x.tbsucursales b on a.id_scrsl=b.id"\
                     " left join ssi7x.tblogins_ge c on c.id = a.id_lgn_ge"\
