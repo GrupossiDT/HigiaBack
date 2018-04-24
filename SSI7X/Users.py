@@ -1,6 +1,6 @@
 '''
     @author: Cristian Botina
-    @since: 01/03/2018 
+    @since: 01/03/2018
 '''
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField
@@ -11,6 +11,7 @@ import Static.errors as errors  # @UnresolvedImport
 import Static.labels as labels  # @UnresolvedImport
 import Static.opciones_higia as optns  # @UnresolvedImport
 import time,hashlib,json #@UnresolvedImport
+<<<<<<< HEAD
 <<<<<<< HEAD
 from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import Static.config_DB as dbConf # @UnresolvedImport
@@ -25,6 +26,11 @@ from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
 from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
 >>>>>>> 65e9795c44c5ce4cc5593e24cbd63bda07870991
+=======
+from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
+import Static.config_DB as dbConf # @UnresolvedImport
+from Static.UploadFiles import UploadFiles  # @UnresolvedImport
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
@@ -32,23 +38,28 @@ validacionSeguridad = ValidacionSeguridad()
 
 class ActualizarAcceso(Form):
     id_login_ge = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_SN_PRMTRS)])
+<<<<<<< HEAD
     login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)]) 
+=======
+    login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)])
+    password = StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_INGRSA_CNTRSNA)])
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
     nombre_usuario = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_INGSA_NMBRE_USRO)])
 
 
 class AcInsertarAcceso(Form):
-    login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)]) 
+    login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)])
     password = StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_INGRSA_CNTRSNA)])
     nombre_usuario = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_INGSA_NMBRE_USRO)])
 
 
 '''
     @author:Cristian Botina
-    @since:01/03/2018 
+    @since:01/03/2018
     @summary:Clase para gestionar los usuarios (logins)
 '''
 class Usuarios(Resource):
-    
+
     def post(self, **kwargs):
         if kwargs['page'] == 'listar':
             return self.ObtenerUsuarios()
@@ -56,6 +67,7 @@ class Usuarios(Resource):
             return self.InsertarUsuarios()
         elif kwargs['page'] == 'actualizar':
             return self.ActualizarUsuario()
+<<<<<<< HEAD
         elif kwargs['page'] == 'claveTemporal':
             return self.claveTemporal()
         elif kwargs['page'] == 'validaClavetemporal':
@@ -67,22 +79,25 @@ class Usuarios(Resource):
         
         
     
+=======
+
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
     '''
         @author:Cristian Botina
-        @since:01/03/2018 
+        @since:01/03/2018
         @summary:Metodo para listar los usuarios
-        @param: Self 
+        @param: Self
         @return:Listado en formato Json
-    '''  
+    '''
     def ObtenerUsuarios(self):
         lc_tkn = request.headers['Authorization']
         ln_opcn_mnu = request.form["id_mnu_ge"]
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
         lc_prmtrs=''
-                
+
         try:
-            ln_id_lgn_ge = request.form['id_login_ge'] 
+            ln_id_lgn_ge = request.form['id_login_ge']
             lc_prmtrs = lc_prmtrs + "  and a.id = " + ln_id_lgn_ge
         except Exception:
             pass
@@ -95,8 +110,8 @@ class Usuarios(Resource):
             ln_id_grpo_emprsrl = request.form['id_grpo_emprsrl']
             lc_prmtrs = lc_prmtrs + "  and id_grpo_emprsrl = " + ln_id_grpo_emprsrl + " "
         except Exception:
-            pass        
-        
+            pass
+
         if val:
             Cursor = lc_cnctn.queryFree(" select "\
                                     " a.id, b.lgn, b.nmbre_usro, b.fto_usro, case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo  "\
@@ -108,21 +123,21 @@ class Usuarios(Resource):
                                     + lc_prmtrs +
                                     " order by "\
                                     " b.lgn")
-            if Cursor :    
+            if Cursor :
                 data = json.loads(json.dumps(Cursor, indent=2))
                 return Utils.nice_json(data,200)
             else:
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_RGSTRS},400)
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
-     
+
     '''
         @author:Cristian Botina
-        @since:01/03/2018 
+        @since:01/03/2018
         @summary:Metodo que inserta el registro en la tabla de logins y logins_ge
-        @param: Self 
+        @param: Self
         @return:Success, 400
-    '''   
+    '''
     def InsertarUsuarios(self):
         lc_tkn = request.headers['Authorization']
         ld_fcha_actl = time.ctime()
@@ -134,8 +149,12 @@ class Usuarios(Resource):
         u = AcInsertarAcceso(request.form)
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
+<<<<<<< HEAD
             #Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200) 
         
+=======
+
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
         if val:
             '''
                 Aqui insertamos los datos del usuario
@@ -143,63 +162,68 @@ class Usuarios(Resource):
             la_clmns_insrtr={}
             la_clmns_insrtr_ge={}
             la_clmns_insrtr['lgn']=request.form['login']
-            la_clmns_insrtr['cntrsna']=lc_cntrsna #pendiente encriptar la contraseña
+            la_clmns_insrtr['cntrsna']=lc_cntrsna #pendiente encriptar la contraseï¿½a
             la_clmns_insrtr['nmbre_usro']=request.form['nombre_usuario']
             la_clmns_insrtr_ge['fcha_crcn']=str(ld_fcha_actl)
             la_clmns_insrtr_ge['fcha_mdfccn']=str(ld_fcha_actl)
             la_clmns_insrtr_ge['id_grpo_emprsrl']=request.form['id_grpo_emprsrl']
-            
+
             '''
                 Validar repetidos
-            ''' 
+            '''
             lc_tbls_query = dbConf.DB_SHMA+".tblogins_ge a INNER JOIN "+dbConf.DB_SHMA+".tblogins b on a.id_lgn=b.id "
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " b.lgn = '"+str(la_clmns_insrtr['lgn'])+"' ")
             print(lc_tbls_query +"::"+str(la_clmns_insrtr['lgn']))
             if CursorValidar:
+<<<<<<< HEAD
                 return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400) 
             
+=======
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
+
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             ln_id_lgn = self.UsuarioInsertaRegistro(la_clmns_insrtr,'tblogins')
             la_clmns_insrtr_ge['id_lgn']=str(ln_id_lgn)
             lc_nmbre_imgn = str(hashlib.md5(str(ln_id_lgn).encode('utf-8')).hexdigest())+'.jpg'
-            
+
             if request.files:
                 la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
                 if la_grdr_archvo['status']=='error':
-                    return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400) 
+                    return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400)
                 else:
                     la_clmns_insrtr['fto_usro'] = str(la_grdr_archvo["retorno"])
-            
+
             '''
                 Actualizo el registro con el nombre de la imagen
-            ''' 
+            '''
             la_clmns_insrtr['id']=str(ln_id_lgn)
             self.UsuarioActualizaRegistro(la_clmns_insrtr,'tblogins')
-            
+
             '''
                 Inserto la relacion en la tabla GE
             '''
             self.UsuarioInsertaRegistro(la_clmns_insrtr_ge,'tblogins_ge')
-            
+
             '''
                 obtengo id_lgn a partir del id_lgn_ge y se lo retorno al success
             '''
             Cursor = lc_cnctn.queryFree("select id from "+dbConf.DB_SHMA+".tblogins_ge order by id desc limit 1")
-            if Cursor :    
+            if Cursor :
                 data = json.loads(json.dumps(Cursor[0], indent=2))
                 ln_id_lgn_ge = data['id']
-            
+
             return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_RGSTRO_EXTSO,"id":ln_id_lgn_ge},200)
             '''
                 Fin de la insercion de los datos
             '''
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
-    
+
     '''
         @author:Cristian Botina
-        @since:01/03/2018 
+        @since:01/03/2018
         @summary:Metodo que actualiza el registro en la tabla de logins y logins_ge
-        @param: Self 
+        @param: Self
         @return:Success, 400
     '''
     def ActualizarUsuario(self):
@@ -218,6 +242,11 @@ class Usuarios(Resource):
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
         if val :
+<<<<<<< HEAD
+=======
+            md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
+
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             '''
                 INSERTAR DATOS
             '''
@@ -229,6 +258,7 @@ class Usuarios(Resource):
             la_clmns_actlzr_ge['id_grpo_emprsrl']=request.form['id_grpo_emprsrl']
             la_clmns_actlzr_ge['estdo'] = lc_estdo
             la_clmns_actlzr['lgn']=request.form['login']
+<<<<<<< HEAD
             
             la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
             
@@ -236,17 +266,29 @@ class Usuarios(Resource):
                 md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
                 la_clmns_actlzr['cntrsna']=md5 
                 
+=======
+            la_clmns_actlzr['cntrsna']=md5 #pendiente encriptar la contraseï¿½a
+            la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
+            lb_estdo    = request.form["estdo"]
+            la_clmns_actlzr['estdo']= True  if lb_estdo == 'ACTIVO' else False
+
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             '''
             Validar repetidos
-            ''' 
+            '''
             lc_tbls_query = dbConf.DB_SHMA+".tblogins_ge a INNER JOIN "+dbConf.DB_SHMA+".tblogins b on a.id_lgn=b.id "
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " a.id <> "+str(la_clmns_actlzr_ge['id'])+" AND b.lgn = '"+str(la_clmns_actlzr['lgn'])+"' ")
             if CursorValidar:
+<<<<<<< HEAD
                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
                
+=======
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
+
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             '''
             Insertar en la tabla auxiliar y obtener id de creacion
-            ''' 
+            '''
             self.UsuarioActualizaRegistro(la_clmns_actlzr_ge,'tblogins_ge')
             #obtengo id_lgn a partir del id_lgn_ge
             Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tblogins_ge', 'id_lgn', "id="+str(la_clmns_actlzr_ge['id']))
@@ -255,6 +297,7 @@ class Usuarios(Resource):
                 ln_id_lgn = data['id_lgn']
             #Actualizo tabla principal
             la_clmns_actlzr['id']=ln_id_lgn
+<<<<<<< HEAD
             
             if request.files:
                 '''
@@ -267,21 +310,34 @@ class Usuarios(Resource):
                 else:
                     la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"]) 
             
+=======
+
+            '''
+            Guardar la imagen en la ruta especificada
+            '''
+            lc_nmbre_imgn = str(hashlib.md5(str(la_clmns_actlzr['id']).encode('utf-8')).hexdigest())+'.jpg'
+            la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
+            if la_grdr_archvo['status']=='error':
+                return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400)
+            else:
+                la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"])
+
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             #ACTUALIZACION TABLA LOGINS OK
             self.UsuarioActualizaRegistro(la_clmns_actlzr,'tblogins')
-            return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200) 
+            return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200)
             '''
                 FIN INSERTAR DATOS
             '''
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
-     
+
     def UsuarioInsertaRegistro(self,objectValues,table_name):
-        return lc_cnctn.queryInsert(dbConf.DB_SHMA+"."+str(table_name), objectValues,'id') 
-    
+        return lc_cnctn.queryInsert(dbConf.DB_SHMA+"."+str(table_name), objectValues,'id')
+
     def UsuarioActualizaRegistro(self,objectValues,table_name):
         return lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str(table_name), objectValues,'id='+str(objectValues['id']))
-    
+
     def GuardarArchivo(self,file,cmpo, drccn_imgn,nmbre_archvo,crr_drccn):
         la_rspsta = {}
         '''
@@ -303,6 +359,7 @@ class Usuarios(Resource):
             la_rspsta['status']='error'
             la_rspsta['retorno']=errors.ERR_NO_ARCVO_DFNDO
         return la_rspsta
+<<<<<<< HEAD
     def claveTemporal(self):
         lc_crro_crprtvo = request.form['crro_crprtvo']
         lc_query_clv_tmp = "select lgn from ( "\
@@ -475,3 +532,5 @@ class Usuarios(Resource):
             Si pasa todas las validaciones, enviar un mensaje de texto consumiendo api de prestador.
         '''
         
+=======
+>>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack

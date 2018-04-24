@@ -5,7 +5,7 @@ Created on 10/01/2018
 '''
 import ldap3
 import ssl
-import SSI7X.Static.config as conf  # @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport
 
 class Conexion_ldap():
     def Conexion_ldap(self,user_ldap,password_ldap):
