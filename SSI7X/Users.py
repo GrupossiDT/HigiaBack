@@ -11,6 +11,7 @@ import Static.errors as errors  # @UnresolvedImport
 import Static.labels as labels  # @UnresolvedImport
 import Static.opciones_higia as optns  # @UnresolvedImport
 import time,hashlib,json #@UnresolvedImport
+<<<<<<< HEAD
 from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import Static.config_DB as dbConf # @UnresolvedImport
 from Static.UploadFiles import UploadFiles  # @UnresolvedImport
@@ -19,6 +20,11 @@ from IPy import IP
 import socket
 import re
 import requests
+=======
+from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
+import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
+from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
+>>>>>>> 65e9795c44c5ce4cc5593e24cbd63bda07870991
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
