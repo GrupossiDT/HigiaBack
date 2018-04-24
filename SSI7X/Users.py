@@ -17,6 +17,8 @@ from Static.UploadFiles import UploadFiles  # @UnresolvedImport
 from mail import correo
 from IPy import IP
 import socket
+import re
+import requests
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
@@ -146,9 +148,10 @@ class Usuarios(Resource):
             ''' 
             lc_tbls_query = dbConf.DB_SHMA+".tblogins_ge a INNER JOIN "+dbConf.DB_SHMA+".tblogins b on a.id_lgn=b.id "
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " b.lgn = '"+str(la_clmns_insrtr['lgn'])+"' ")
+            print(lc_tbls_query +"::"+str(la_clmns_insrtr['lgn']))
             if CursorValidar:
                 return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400) 
-
+            
             ln_id_lgn = self.UsuarioInsertaRegistro(la_clmns_insrtr,'tblogins')
             la_clmns_insrtr_ge['id_lgn']=str(ln_id_lgn)
             lc_nmbre_imgn = str(hashlib.md5(str(ln_id_lgn).encode('utf-8')).hexdigest())+'.jpg'
@@ -233,7 +236,7 @@ class Usuarios(Resource):
             lc_tbls_query = dbConf.DB_SHMA+".tblogins_ge a INNER JOIN "+dbConf.DB_SHMA+".tblogins b on a.id_lgn=b.id "
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " a.id <> "+str(la_clmns_actlzr_ge['id'])+" AND b.lgn = '"+str(la_clmns_actlzr['lgn'])+"' ")
             if CursorValidar:
-                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400) 
+               return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
                
             '''
             Insertar en la tabla auxiliar y obtener id de creacion
@@ -314,7 +317,7 @@ class Usuarios(Resource):
                                     " inner join ssi7x.tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
                                     " inner join ssi7x.tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
                                     " where id_mtvo_rtro_une is null) as test "\
-                                     " where crro_elctrnco ='"+lc_crro_crprtvo+"'"
+                                    " where crro_elctrnco ='"+lc_crro_crprtvo+"'"
         Cursor_clv_tmp = lc_cnctn.queryFree(lc_query_clv_tmp)
         if Cursor_clv_tmp :
             #validamos que no tenga una clave temporal ya generada al menos 3 intentos en 30 min
@@ -330,7 +333,7 @@ class Usuarios(Resource):
             if Cursor:
                 data_vlda = json.loads(json.dumps(Cursor[0], indent=2))
                 if data_vlda['count'] <=3:
-                    try:
+                    #try:
                         #se inserta en la tabla para posterior validacion
                         arrayValues = {}
                         ld_fcha_actl = time.ctime()
@@ -352,8 +355,8 @@ class Usuarios(Resource):
                                     "<b>Clave Generada:</b>"+str(clave_tmp)
                         correo.enviarCorreo(lc_crro_crprtvo,asunto,mensaje)
                         return Utils.nice_json({labels.lbl_stts_success:'Clave Temporal Generada con Exito! Redireccionando Espera un Momento...'},200)
-                    except Exception:
-                        return Utils.nice_json({labels.lbl_stts_error:'No es posible enviar los datos'},400)
+                    #except Exception:
+                    #    return Utils.nice_json({labels.lbl_stts_error:'No es posible enviar los datos'},400)
                 else:
                     return Utils.nice_json({labels.lbl_stts_error:'Ya se encuentra una Clave Generada para el ingreso Revisa tu correo o mensajes de texto intentalo mas tarde'},400)
         else:
@@ -363,7 +366,8 @@ class Usuarios(Resource):
     def validaclaveTemporal(self):
         lc_clve_tmprl = request.form['clve_tmprl']
         lc_query = "select "\
-        "estdo "\
+        "estdo, "\
+        "crreo_slctnte "\
         "from "\
         "ssi7x.tbclaves_tmp "\
         "where "\
@@ -386,10 +390,82 @@ class Usuarios(Resource):
         lc_nva_cntrsna = request.form['nva_cntrsna']
         lc_rnva_cntrsna = request.form['rnva_cntrsna']
         responsed = self.validaclaveTemporal()
-        print(str(responsed.data).encode('utf8'))
+        ld_fcha_actl = time.ctime()
+        lc_cntrsna = hashlib.md5(lc_nva_cntrsna.encode('utf-8')).hexdigest()
         
-        '''if self.validaclaveTemporal():
-            if lc_nva_cntrsna==lc_rnva_cntrsna:
-                return Utils.nice_json({labels.lbl_stts_success:True},200)
-            else:
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CNCD_CNTSNA},400)'''
+        '''
+            Validaa nueva contrasena y la clave temporal tiene que ser iguales
+        '''
+        if lc_nva_cntrsna != lc_rnva_cntrsna:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CNCD_CNTSNA},400)
+        
+        '''
+            Validar que la cadena que se recibe de codigo, se encuentre en la base de datos y vigente por los 30 minutos
+        '''
+        if responsed.status_code != 200:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
+        
+        '''
+            Validar que la contrasena cumpla con el Patron de contraseas
+        '''
+        if not re.match(conf.EXPRESION_CLAVE_USUARIO, lc_nva_cntrsna):
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
+        
+        
+        '''
+            Actualizar el usuario que coincida con el codigo registrado
+        ''' 
+        lc_query_usro = "select lgn, id_lgn, id_lgn_ge from ( "\
+                                    " select "\
+                                    " case when emplds_une.id is not null then "\
+                                    " emplds.crro_elctrnco "\
+                                    " else "\
+                                    " prstdr.crro_elctrnco "\
+                                    " end as crro_elctrnco,lgn.lgn, lgn.id id_lgn, lgn_ge.id id_lgn_ge "\
+                                    " from ssi7x.tblogins_ge lgn_ge "\
+                                    " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn "\
+                                    " left join ssi7x.tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join ssi7x.tbempleados emplds on emplds.id = emplds_une.id_empldo "\
+                                    " left join ssi7x.tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join ssi7x.tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une "\
+                                    " left join ssi7x.tbcargos crgo on crgo.id = crgo_une.id_crgo "\
+                                    " left join ssi7x.tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco "\
+                                    " inner join ssi7x.tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
+                                    " inner join ssi7x.tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
+                                    " where id_mtvo_rtro_une is null) as test "\
+                                    " where crro_elctrnco = (select "\
+                                    " crreo_slctnte "\
+                                    " from "\
+                                    " ssi7x.tbclaves_tmp "\
+                                    " where "\
+                                    " current_timestamp - fcha_crcn < INTERVAL '30' minute "\
+                                    " and estdo = true and cntrsna = '"+lc_clve_tmprl+"') "
+        Cursor_clv_tmp = lc_cnctn.queryFree(lc_query_usro)
+        if Cursor_clv_tmp :
+            data_usro = json.loads(json.dumps(Cursor_clv_tmp[0], indent=2))
+            
+            #Actualiza login
+            la_clmns_actlzr_lgn = {}
+            la_clmns_actlzr_lgn['id']=str(data_usro['id_lgn'])
+            la_clmns_actlzr_lgn['cntrsna']=str(lc_cntrsna)
+            self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn,'tblogins')
+            
+            la_clmns_actlzr_lgn_ge = {}
+            la_clmns_actlzr_lgn_ge['id']=str(data_usro['id_lgn_ge'])
+            la_clmns_actlzr_lgn_ge['fcha_mdfccn']=str(ld_fcha_actl)
+            self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn_ge,'tblogins_ge')
+            
+            return Utils.nice_json({labels.lbl_stts_success:True},200)
+        
+           # r = requests.get('https://www.portalsms.co/wsSMS/wsEnviosSMS.php?wsdl', auth=('3155828235', 'Hola Mundo', 'alo.ssalud','12345678'))
+            
+            
+        '''
+            Validar que solo lo permita hacer con usuarios que no estan con ELDA
+        '''
+        
+         
+        '''
+            Si pasa todas las validaciones, enviar un mensaje de texto consumiendo api de prestador.
+        '''
+        

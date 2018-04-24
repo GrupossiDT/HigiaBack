@@ -103,7 +103,8 @@ class AutenticacionUsuarios(Resource):
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors}, 400)
         IpUsuario = IP(socket.gethostbyname(socket.gethostname()))
-        if IpUsuario.iptype() == 'PUBLIC':
+        #if IpUsuario.iptype() == 'PUBLIC':
+        if IpUsuario.iptype() == 'PRIVATE':
             md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest() 
             Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA + '.tblogins', 'lgn,cntrsna', "lgn='" + request.form['username'] + "' and  cntrsna='" + md5 + "'")
             if Cursor :
@@ -113,7 +114,8 @@ class AutenticacionUsuarios(Resource):
                     return validacionSeguridad.validaUsuario(request.form['username'])
             else:
                 ingreso               
-        elif IpUsuario.iptype() == 'PRIVATE':
+        #elif IpUsuario.iptype() == 'PRIVATE':
+        elif IpUsuario.iptype() == 'PUBLIC':
             Cldap = Conexion_ldap()
             VerificaConexion = Cldap.Conexion_ldap(request.form['username'], request.form['password'])
             if VerificaConexion :
