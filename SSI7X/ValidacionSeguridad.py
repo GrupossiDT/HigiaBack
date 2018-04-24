@@ -10,13 +10,13 @@ from _codecs import decode
 from flask_restful import Resource
 import jwt, json  # @UnresolvedImport
 
-from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from SSI7X.Static.Utils import Utils  # @UnresolvedImport
-import SSI7X.Static.config as conf  # @UnresolvedImport
-import SSI7X.Static.errors as errors  # @UnresolvedImport
-import SSI7X.Static.config_DB as confDB # @UnresolvedImport
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport
+import Static.errors as errors  # @UnresolvedImport
+import Static.config_DB as confDB # @UnresolvedImport
 
-# clase para manejo de permisos por usuario menu 
+# clase para manejo de permisos por usuario menu
 class ValidacionSeguridad(Resource):
     Utils = Utils()
     C = ConnectDB()
@@ -33,7 +33,7 @@ class ValidacionSeguridad(Resource):
                 return False
         else:
             False
-        
+
     def validaUsuario(self, usuario):
         IdUsuarioGe = json.loads(json.dumps(self.ObtenerDatosUsuario(usuario)[0], indent=2))
         strQuery = "SELECT "\
@@ -45,7 +45,7 @@ class ValidacionSeguridad(Resource):
                     " left join ssi7x.tblogins_ge c on c.id = a.id_lgn_ge"\
                     " WHERE  a.id_lgn_ge = " + str(IdUsuarioGe['id_lgn_ge']) + " and a.mrca_scrsl_dfcto is true"
         Cursor = self.C.queryFree(strQuery)
-        
+
         if Cursor :
             data = json.loads(json.dumps(Cursor[0], indent=2))
             if data['estdo']:
@@ -53,16 +53,16 @@ class ValidacionSeguridad(Resource):
             else:
                 return errors.ERR_NO_USRO_INCTVO
         else:
-            return errors.ERR_NO_TNE_PRFL  
-     
+            return errors.ERR_NO_TNE_PRFL
+
     def ValidacionToken(self, key):
         try:
             token = self.C.querySelect(confDB.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
             decode = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
             return decode
         except jwt.exceptions.ExpiredSignatureError:
-            return  None     
-    
+            return  None
+
     def ValidaOpcionMenu(self, id_lgn_prfl_scrsl, id_mnu_ge):
             Cursor = self.C.queryFree(" select a.id "\
                                  " from ssi7x.tblogins_perfiles_menu a inner join "\
@@ -74,14 +74,14 @@ class ValidacionSeguridad(Resource):
                                      " where c.estdo=true "\
                                      " and b.estdo=true "\
                                      " and a.estdo=true "\
-                                     " and d.id = " + str(id_mnu_ge) + " and a.id_lgn_prfl_scrsl = " + str(id_lgn_prfl_scrsl))                   
+                                     " and d.id = " + str(id_mnu_ge) + " and a.id_lgn_prfl_scrsl = " + str(id_lgn_prfl_scrsl))
             if Cursor:
                 return True
             else:
                 return False
-    
+
     def ObtenerDatosUsuario(self, usuario):
-        cursor = self.C.queryFree(" select " \
+        cursor = self.C.queryFree(" select "\
                              " case when emplds_une.id is not null then "\
                              " concat_ws("\
                              " ' ',"\
@@ -89,19 +89,24 @@ class ValidacionSeguridad(Resource):
                              " emplds.sgndo_nmbre,"\
                              " emplds.prmr_aplldo,"\
                              " emplds.sgndo_aplldo)"\
+                             " else"\
+                             " prstdr.nmbre_rzn_scl"\
+                             " end as nmbre_cmplto,"\
+                             " case when emplds_une.id is not null then"\
+                             " emplds.crro_elctrnco"\
                              " else" \
-                             " prstdr.nmbre_rzn_scl" \
-                             " end as nmbre_cmplto," \
-                             " case when emplds_une.id is not null then" \
-                             " emplds.crro_elctrnco" \
-                             " else" \
-                             " prstdr.crro_elctrnco" \
-                             " end as crro_elctrnco," \
-                             " lgn_ge.id as id_lgn_ge, " \
-                             " lgn.lgn as lgn, " \
-                             " crgo.dscrpcn as crgo, " \
+                             " prstdr.crro_elctrnco"\
+                             " end as crro_elctrnco,"\
+                             " lgn_ge.id as id_lgn_ge, "\
+                             " lgn.lgn as lgn, "\
+                             " crgo.dscrpcn as crgo, "\
                              " lgn.fto_usro as fto_usro, "\
-                             " emplds_une.id_undd_ngco as id_undd_ngco, "\
+                             "(Case when emplds_une.id_undd_ngco is null THEN "\
+                             "prfl_une.id_undd_ngco "\
+                             " ELSE "\
+                             " emplds_une.id_undd_ngco "\
+                               " END "\
+                             " ) as id_undd_ngco,"\
                              " lgn_ge.id_grpo_emprsrl as id_grpo_emprsrl "
                              " from ssi7x.tblogins_ge lgn_ge " \
                              " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn " \
@@ -111,5 +116,7 @@ class ValidacionSeguridad(Resource):
                              " left join ssi7x.tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une " \
                              " left join ssi7x.tbcargos crgo on crgo.id = crgo_une.id_crgo " \
                              " left join ssi7x.tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco " \
+                             " inner join ssi7x.tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
+                             " inner join ssi7x.tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
                              " where lgn.lgn = '" + usuario + "' and id_mtvo_rtro_une is null")
         return cursor

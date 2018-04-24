@@ -4,12 +4,12 @@
 from flask import Flask, Blueprint
 from flask_cors import CORS
 from flask_restful import Api
-import SSI7X.Static.config as conf  # @UnresolvedImport 
-from SSI7X.AuthUsers import AutenticacionUsuarios  # @UnresolvedImport
-from SSI7X.perfiles import Perfiles # @UnresolvedImport
-from SSI7X.Users import Usuarios # @UnresolvedImport
-from SSI7X.preguntas import Preguntas# @UnresolvedImport
-from SSI7X.menu import Menu# @UnresolvedImport
+import Static.config as conf  # @UnresolvedImport
+from AuthUsers import AutenticacionUsuarios  # @UnresolvedImport
+from perfiles import Perfiles # @UnresolvedImport
+from Users import Usuarios # @UnresolvedImport
+from preguntas import Preguntas# @UnresolvedImport
+from menu import Menu# @UnresolvedImport
 
 
 
@@ -20,7 +20,7 @@ auth = Blueprint('login', __name__)
 images = Blueprint('images', __name__, static_folder='/img')
 
 app = Flask(__name__)
-#To Do:Verificar la seguridad del cors  
+#To Do:Verificar la seguridad del cors
 # commit luis
 CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],supports_credentials=True)
 
@@ -35,5 +35,5 @@ api.add_resource(Menu,'/menu/<page>')
 if __name__ == '__main__':
     app.register_blueprint(auth)
     app.register_blueprint(images)
-    app.secret_key = conf.SS_TKN_SCRET_KEY 
+    app.secret_key = conf.SS_TKN_SCRET_KEY
     app.run( conf.SV_HOST,conf.SV_PORT,conf.ST_DEBUG)
