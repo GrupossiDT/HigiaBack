@@ -169,14 +169,13 @@ class AutenticacionUsuarios(Resource):
                 if type(id_lgn_prfl_scrsl) is not dict:
                     return id_lgn_prfl_scrsl
 
-                strQuery = 'SELECT a."text",a.id,a.id_mnu_ge,a.parentid,a.lnk as enlace,(d.id is Not Null) favorito '\
+                strQuery = 'SELECT a."text",a.id,a.id_mnu_ge,a.parentid,a.lnk as enlace,(d.id is Not Null) as favorito '\
                                 'FROM (select  c.dscrpcn as text ,  b.id_mnu as id ,a.id_mnu_ge,  c.id_mnu as parentid , c.lnk ,a.id Mid,c.ordn '\
-                                'FROM ssi7x.tblogins_perfiles_menu a INNER JOIN '\
-                                'ssi7x.tbmenu_ge b on a.id_mnu_ge=b.id INNER JOIN '\
-                                'ssi7x.tbmenu c ON b.id_mnu = c.id '\
+                                'FROM '+dbConf.DB_SHMA+'.tblogins_perfiles_menu as a INNER JOIN '\
+                                ''+dbConf.DB_SHMA+'.tbmenu_ge as b on a.id_mnu_ge=b.id INNER JOIN '\
+                                ''+dbConf.DB_SHMA+'.tbmenu as c ON b.id_mnu = c.id '\
                                 'where a.estdo=true  and b.estdo=true  and a.id_lgn_prfl_scrsl =' + str(id_lgn_prfl_scrsl['id_prfl_scrsl']) + ' '\
-                                ' )a LEFT JOIN ssi7x.tbfavoritosmenu d on d.id_lgn_prfl_mnu = a.Mid ORDER BY  cast(a.ordn as integer)'
-
+                                ' ) as a LEFT JOIN '+dbConf.DB_SHMA+'.tbfavoritosmenu d on d.id_lgn_prfl_mnu = a.Mid ORDER BY  cast(a.ordn as integer)'
                 Cursor = lc_cnctn.queryFree(strQuery)
                 if Cursor :
                     data = json.loads(json.dumps(Cursor, indent=2))
@@ -203,7 +202,7 @@ class AutenticacionUsuarios(Resource):
                                  " fto_usro,"\
                                  " nmbre_usro, "\
                                  " estdo "\
-                                 " from ssi7x.tblogins where lgn = '" + str(request.form['username']) + "'")
+                                 " from " + dbConf.DB_SHMA + ".tblogins where lgn = '" + str(request.form['username']) + "'")
         if Cursor :
             data = json.loads(json.dumps(Cursor[0], indent=2))
             if data['estdo']:
