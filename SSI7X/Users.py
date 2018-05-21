@@ -11,8 +11,6 @@ import Static.errors as errors  # @UnresolvedImport
 import Static.labels as labels  # @UnresolvedImport
 import Static.opciones_higia as optns  # @UnresolvedImport
 import time,hashlib,json #@UnresolvedImport
-<<<<<<< HEAD
-<<<<<<< HEAD
 from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import Static.config_DB as dbConf # @UnresolvedImport
 from Static.UploadFiles import UploadFiles  # @UnresolvedImport
@@ -21,16 +19,7 @@ from IPy import IP
 import socket
 import re
 import requests
-=======
-from SSI7X.ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
-import SSI7X.Static.config_DB as dbConf # @UnresolvedImport
-from SSI7X.Static.UploadFiles import UploadFiles  # @UnresolvedImport
->>>>>>> 65e9795c44c5ce4cc5593e24cbd63bda07870991
-=======
-from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
-import Static.config_DB as dbConf # @UnresolvedImport
-from Static.UploadFiles import UploadFiles  # @UnresolvedImport
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
+
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
@@ -38,12 +27,7 @@ validacionSeguridad = ValidacionSeguridad()
 
 class ActualizarAcceso(Form):
     id_login_ge = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_SN_PRMTRS)])
-<<<<<<< HEAD
-    login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)]) 
-=======
     login = StringField(labels.lbl_lgn,[validators.DataRequired(message=errors.ERR_NO_INGSA_USRO)])
-    password = StringField(labels.lbl_cntrsna,[validators.DataRequired(message=errors.ERR_NO_INGRSA_CNTRSNA)])
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
     nombre_usuario = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_INGSA_NMBRE_USRO)])
 
 
@@ -67,21 +51,17 @@ class Usuarios(Resource):
             return self.InsertarUsuarios()
         elif kwargs['page'] == 'actualizar':
             return self.ActualizarUsuario()
-<<<<<<< HEAD
         elif kwargs['page'] == 'claveTemporal':
             return self.claveTemporal()
         elif kwargs['page'] == 'validaClavetemporal':
             return self.validaclaveTemporal()
         elif kwargs['page'] == 'actualizarContrasena':
-            return self.actualizarContrasena()        
-        
-        
-        
-        
-    
-=======
+            return self.actualizarContrasena()
 
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
+
+
+
+
     '''
         @author:Cristian Botina
         @since:01/03/2018
@@ -144,17 +124,20 @@ class Usuarios(Resource):
         ln_opcn_mnu = request.form["id_mnu_ge"]
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
+
+        '''
+            Validar que la contrasena cumpla con el Patron de contraseas
+        '''
+        if not re.match(conf.EXPRESION_CLAVE_USUARIO, request.form['password']):
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
+
         lc_cntrsna = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
         #Validar los campos requeridos.
         u = AcInsertarAcceso(request.form)
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
-<<<<<<< HEAD
-            #Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200) 
-        
-=======
+            #Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200)
 
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
         if val:
             '''
                 Aqui insertamos los datos del usuario
@@ -175,13 +158,8 @@ class Usuarios(Resource):
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " b.lgn = '"+str(la_clmns_insrtr['lgn'])+"' ")
             print(lc_tbls_query +"::"+str(la_clmns_insrtr['lgn']))
             if CursorValidar:
-<<<<<<< HEAD
-                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400) 
-            
-=======
                 return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
 
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             ln_id_lgn = self.UsuarioInsertaRegistro(la_clmns_insrtr,'tblogins')
             la_clmns_insrtr_ge['id_lgn']=str(ln_id_lgn)
             lc_nmbre_imgn = str(hashlib.md5(str(ln_id_lgn).encode('utf-8')).hexdigest())+'.jpg'
@@ -231,10 +209,14 @@ class Usuarios(Resource):
         ld_fcha_actl = time.ctime()
         ln_opcn_mnu = request.form["id_mnu_ge"]
         lc_estdo = request.form["estdo"]
-        
-       
-        
-        
+
+        '''
+            Validar que la contrasena cumpla con el Patron de contraseas
+        '''
+        if not re.match(conf.EXPRESION_CLAVE_USUARIO, request.form['password']):
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
+
+
         validacionSeguridad = ValidacionSeguridad()
         val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
         #Validar los campos requeridos.
@@ -242,11 +224,6 @@ class Usuarios(Resource):
         if not u.validate():
             return Utils.nice_json({labels.lbl_stts_error:u.errors},400)
         if val :
-<<<<<<< HEAD
-=======
-            md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
-
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             '''
                 INSERTAR DATOS
             '''
@@ -258,34 +235,21 @@ class Usuarios(Resource):
             la_clmns_actlzr_ge['id_grpo_emprsrl']=request.form['id_grpo_emprsrl']
             la_clmns_actlzr_ge['estdo'] = lc_estdo
             la_clmns_actlzr['lgn']=request.form['login']
-<<<<<<< HEAD
-            
+
             la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
-            
+
             if request.form['password']:
                 md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
-                la_clmns_actlzr['cntrsna']=md5 
-                
-=======
-            la_clmns_actlzr['cntrsna']=md5 #pendiente encriptar la contrase�a
-            la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
-            lb_estdo    = request.form["estdo"]
-            la_clmns_actlzr['estdo']= True  if lb_estdo == 'ACTIVO' else False
+                la_clmns_actlzr['cntrsna']=md5
 
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             '''
             Validar repetidos
             '''
             lc_tbls_query = dbConf.DB_SHMA+".tblogins_ge a INNER JOIN "+dbConf.DB_SHMA+".tblogins b on a.id_lgn=b.id "
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " a.id <> "+str(la_clmns_actlzr_ge['id'])+" AND b.lgn = '"+str(la_clmns_actlzr['lgn'])+"' ")
             if CursorValidar:
-<<<<<<< HEAD
                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
-               
-=======
-                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
 
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             '''
             Insertar en la tabla auxiliar y obtener id de creacion
             '''
@@ -297,8 +261,7 @@ class Usuarios(Resource):
                 ln_id_lgn = data['id_lgn']
             #Actualizo tabla principal
             la_clmns_actlzr['id']=ln_id_lgn
-<<<<<<< HEAD
-            
+
             if request.files:
                 '''
                 Guardar la imagen en la ruta especificada
@@ -306,23 +269,10 @@ class Usuarios(Resource):
                 lc_nmbre_imgn = str(hashlib.md5(str(la_clmns_actlzr['id']).encode('utf-8')).hexdigest())+'.jpg'
                 la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
                 if la_grdr_archvo['status']=='error':
-                    return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400) 
+                    return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400)
                 else:
-                    la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"]) 
-            
-=======
+                    la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"])
 
-            '''
-            Guardar la imagen en la ruta especificada
-            '''
-            lc_nmbre_imgn = str(hashlib.md5(str(la_clmns_actlzr['id']).encode('utf-8')).hexdigest())+'.jpg'
-            la_grdr_archvo = self.GuardarArchivo(request.files,'imge_pth',conf.SV_DIR_IMAGES,lc_nmbre_imgn,True)
-            if la_grdr_archvo['status']=='error':
-                return Utils.nice_json({labels.lbl_stts_error:la_grdr_archvo['retorno']},400)
-            else:
-                la_clmns_actlzr['fto_usro'] = str(la_grdr_archvo["retorno"])
-
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack
             #ACTUALIZACION TABLA LOGINS OK
             self.UsuarioActualizaRegistro(la_clmns_actlzr,'tblogins')
             return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200)
@@ -359,26 +309,25 @@ class Usuarios(Resource):
             la_rspsta['status']='error'
             la_rspsta['retorno']=errors.ERR_NO_ARCVO_DFNDO
         return la_rspsta
-<<<<<<< HEAD
     def claveTemporal(self):
         lc_crro_crprtvo = request.form['crro_crprtvo']
-        lc_query_clv_tmp = "select lgn from ( "\
+        lc_query_clv_tmp = "select lgn, tlfno_cllr from ( "\
                                     " select "\
                                     " case when emplds_une.id is not null then "\
                                     " emplds.crro_elctrnco "\
                                     " else "\
                                     " prstdr.crro_elctrnco "\
-                                    " end as crro_elctrnco,lgn.lgn "\
-                                    " from ssi7x.tblogins_ge lgn_ge "\
-                                    " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn "\
-                                    " left join ssi7x.tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id "\
-                                    " left join ssi7x.tbempleados emplds on emplds.id = emplds_une.id_empldo "\
-                                    " left join ssi7x.tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id "\
-                                    " left join ssi7x.tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une "\
-                                    " left join ssi7x.tbcargos crgo on crgo.id = crgo_une.id_crgo "\
-                                    " left join ssi7x.tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco "\
-                                    " inner join ssi7x.tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
-                                    " inner join ssi7x.tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
+                                    " end as crro_elctrnco,lgn.lgn, emplds.tlfno_cllr "\
+                                    " from "+dbConf.DB_SHMA+".tblogins_ge lgn_ge "\
+                                    " left join "+dbConf.DB_SHMA+".tblogins lgn on lgn.id = lgn_ge.id_lgn "\
+                                    " left join "+dbConf.DB_SHMA+".tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join "+dbConf.DB_SHMA+".tbempleados emplds on emplds.id = emplds_une.id_empldo "\
+                                    " left join "+dbConf.DB_SHMA+".tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join "+dbConf.DB_SHMA+".tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une "\
+                                    " left join "+dbConf.DB_SHMA+".tbcargos crgo on crgo.id = crgo_une.id_crgo "\
+                                    " left join "+dbConf.DB_SHMA+".tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco "\
+                                    " inner join "+dbConf.DB_SHMA+".tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
+                                    " inner join "+dbConf.DB_SHMA+".tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
                                     " where id_mtvo_rtro_une is null) as test "\
                                     " where crro_elctrnco ='"+lc_crro_crprtvo+"'"
         Cursor_clv_tmp = lc_cnctn.queryFree(lc_query_clv_tmp)
@@ -387,7 +336,7 @@ class Usuarios(Resource):
             lc_query = "select "\
                          "count(estdo) as count "\
                          "from "\
-                         "ssi7x.tbclaves_tmp "\
+                         ""+dbConf.DB_SHMA+".tbclaves_tmp "\
                          "where "\
                          "current_timestamp - fcha_crcn < INTERVAL '30' minute "\
                          "and estdo = true "\
@@ -411,12 +360,19 @@ class Usuarios(Resource):
                         lc_cnctn.queryInsert(dbConf.DB_SHMA + ".tbclaves_tmp", arrayValues)
                         data = json.loads(json.dumps(Cursor_clv_tmp[0], indent=2))
                         asunto = "Clave Temporal de Acceso Higia SSI"
-        
+
                         mensaje =   "Hola "+data['lgn']+" "\
-                                    "<p>La clave temporal auto generada por el sistema estara vigente por 30 minutos</p>"\
+                                    "<p>La clave temporal auto generada por el sistema estará vigente por 30 minutos</p>"\
                                     "<br>"\
                                     "<b>Clave Generada:</b>"+str(clave_tmp)
                         correo.enviarCorreo(lc_crro_crprtvo,asunto,mensaje)
+
+                        #ENVIO DEL CODIGO POR MENSAJE DE TEXTO
+                        ln_cllr = data['tlfno_cllr']
+                        lc_sms = "La clave temporal generada por el sistema estará vigente por 30 minutos. Clave Generada:"+str(clave_tmp)
+                        #lc_sms = lc_sms.replace(" ", "+")
+                        lc_stts_web_srvcs_SMS = Utils.webServiceSMS(conf.URL_WS_SMS,ln_cllr,lc_sms,conf.LGN_USRO_WS_SMS,conf.CNTRSNA_USRO_WS_SMS)
+
                         return Utils.nice_json({labels.lbl_stts_success:'Clave Temporal Generada con Exito! Redireccionando Espera un Momento...'},200)
                     #except Exception:
                     #    return Utils.nice_json({labels.lbl_stts_error:'No es posible enviar los datos'},400)
@@ -424,15 +380,15 @@ class Usuarios(Resource):
                     return Utils.nice_json({labels.lbl_stts_error:'Ya se encuentra una Clave Generada para el ingreso Revisa tu correo o mensajes de texto intentalo mas tarde'},400)
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CRRO_SSTMA},400)
-        
-        
+
+
     def validaclaveTemporal(self):
         lc_clve_tmprl = request.form['clve_tmprl']
         lc_query = "select "\
         "estdo, "\
         "crreo_slctnte "\
         "from "\
-        "ssi7x.tbclaves_tmp "\
+        ""+dbConf.DB_SHMA+".tbclaves_tmp "\
         "where "\
         "current_timestamp - fcha_crcn < INTERVAL '30' minute "\
         "and estdo = true "\
@@ -446,38 +402,37 @@ class Usuarios(Resource):
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
-        
+
     def actualizarContrasena(self):
-        
+
         lc_clve_tmprl = request.form['clve_tmprl']
         lc_nva_cntrsna = request.form['nva_cntrsna']
         lc_rnva_cntrsna = request.form['rnva_cntrsna']
         responsed = self.validaclaveTemporal()
         ld_fcha_actl = time.ctime()
         lc_cntrsna = hashlib.md5(lc_nva_cntrsna.encode('utf-8')).hexdigest()
-        
+
         '''
             Validaa nueva contrasena y la clave temporal tiene que ser iguales
         '''
         if lc_nva_cntrsna != lc_rnva_cntrsna:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CNCD_CNTSNA},400)
-        
+
         '''
             Validar que la cadena que se recibe de codigo, se encuentre en la base de datos y vigente por los 30 minutos
         '''
         if responsed.status_code != 200:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
-        
+
         '''
             Validar que la contrasena cumpla con el Patron de contraseas
         '''
         if not re.match(conf.EXPRESION_CLAVE_USUARIO, lc_nva_cntrsna):
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
-        
-        
+
         '''
             Actualizar el usuario que coincida con el codigo registrado
-        ''' 
+        '''
         lc_query_usro = "select lgn, id_lgn, id_lgn_ge from ( "\
                                     " select "\
                                     " case when emplds_une.id is not null then "\
@@ -485,52 +440,41 @@ class Usuarios(Resource):
                                     " else "\
                                     " prstdr.crro_elctrnco "\
                                     " end as crro_elctrnco,lgn.lgn, lgn.id id_lgn, lgn_ge.id id_lgn_ge "\
-                                    " from ssi7x.tblogins_ge lgn_ge "\
-                                    " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn "\
-                                    " left join ssi7x.tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id "\
-                                    " left join ssi7x.tbempleados emplds on emplds.id = emplds_une.id_empldo "\
-                                    " left join ssi7x.tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id "\
-                                    " left join ssi7x.tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une "\
-                                    " left join ssi7x.tbcargos crgo on crgo.id = crgo_une.id_crgo "\
-                                    " left join ssi7x.tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco "\
-                                    " inner join ssi7x.tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
-                                    " inner join ssi7x.tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
+                                    " from "+dbConf.DB_SHMA+".tblogins_ge lgn_ge "\
+                                    " left join "+dbConf.DB_SHMA+".tblogins lgn on lgn.id = lgn_ge.id_lgn "\
+                                    " left join "+dbConf.DB_SHMA+".tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join "+dbConf.DB_SHMA+".tbempleados emplds on emplds.id = emplds_une.id_empldo "\
+                                    " left join "+dbConf.DB_SHMA+".tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id "\
+                                    " left join "+dbConf.DB_SHMA+".tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une "\
+                                    " left join "+dbConf.DB_SHMA+".tbcargos crgo on crgo.id = crgo_une.id_crgo "\
+                                    " left join "+dbConf.DB_SHMA+".tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco "\
+                                    " inner join "+dbConf.DB_SHMA+".tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
+                                    " inner join "+dbConf.DB_SHMA+".tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
                                     " where id_mtvo_rtro_une is null) as test "\
                                     " where crro_elctrnco = (select "\
                                     " crreo_slctnte "\
                                     " from "\
-                                    " ssi7x.tbclaves_tmp "\
+                                    " "+dbConf.DB_SHMA+".tbclaves_tmp "\
                                     " where "\
                                     " current_timestamp - fcha_crcn < INTERVAL '30' minute "\
                                     " and estdo = true and cntrsna = '"+lc_clve_tmprl+"') "
         Cursor_clv_tmp = lc_cnctn.queryFree(lc_query_usro)
         if Cursor_clv_tmp :
             data_usro = json.loads(json.dumps(Cursor_clv_tmp[0], indent=2))
-            
+
             #Actualiza login
             la_clmns_actlzr_lgn = {}
             la_clmns_actlzr_lgn['id']=str(data_usro['id_lgn'])
             la_clmns_actlzr_lgn['cntrsna']=str(lc_cntrsna)
             self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn,'tblogins')
-            
+
             la_clmns_actlzr_lgn_ge = {}
             la_clmns_actlzr_lgn_ge['id']=str(data_usro['id_lgn_ge'])
             la_clmns_actlzr_lgn_ge['fcha_mdfccn']=str(ld_fcha_actl)
             self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn_ge,'tblogins_ge')
-            
+
             return Utils.nice_json({labels.lbl_stts_success:True},200)
-        
-           # r = requests.get('https://www.portalsms.co/wsSMS/wsEnviosSMS.php?wsdl', auth=('3155828235', 'Hola Mundo', 'alo.ssalud','12345678'))
-            
-            
+
         '''
             Validar que solo lo permita hacer con usuarios que no estan con ELDA
         '''
-        
-         
-        '''
-            Si pasa todas las validaciones, enviar un mensaje de texto consumiendo api de prestador.
-        '''
-        
-=======
->>>>>>> branch 'robin.valencia' of https://github.com/GrupossiDT/HigiaBack

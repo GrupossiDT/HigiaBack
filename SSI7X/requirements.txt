@@ -7,5 +7,8 @@ IPy==0.83
 ldap3==2.4
 ua-parser==0.7.3
 user-agents==1.1.0
+
 Flask-Session==0.3.1
+
 PyJWT==1.5.3
+pysimplesoap==1.16.2

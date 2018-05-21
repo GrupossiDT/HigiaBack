@@ -1,6 +1,6 @@
 UTIL_DS = '/'
-ST_DEBUG = True 
-SV_HOST = "192.168.10.235"
+ST_DEBUG = True
+SV_HOST = "127.0.0.1"
 SV_PORT = 5000
 SS_TKN_SIZE = 24
 PW_MN_SIZE = 8
@@ -13,3 +13,6 @@ SV_DIR_IMAGES ="Static/img"
 SMTP_USER = "cristian.botina@grupossi.com"
 SMTP_USER_PSWD = "PjL9L?Q>"
 EXPRESION_CLAVE_USUARIO = '^(?=\w*\d)(?=\w*[A-Z])(?=\w*[a-z])\S{8,40}$'
+URL_WS_SMS = "https://www.portalsms.co/wsSMS/wsEnviosSMS.php?wsdl"
+LGN_USRO_WS_SMS = "alo.ssalud"
+CNTRSNA_USRO_WS_SMS = "12345678"
