@@ -14,10 +14,13 @@ import time,hashlib,json #@UnresolvedImport
 from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import Static.config_DB as dbConf # @UnresolvedImport
 from Static.UploadFiles import UploadFiles  # @UnresolvedImport
+from descarga import Descarga
 
 lc_cnctn = ConnectDB()
 Utils = Utils()
 validacionSeguridad = ValidacionSeguridad()
+
+descarga = Descarga()
 
 class ActualizarAcceso(Form):
     id_login_ge = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_SN_PRMTRS)])
@@ -46,7 +49,14 @@ class Usuarios(Resource):
             return self.InsertarUsuarios()
         elif kwargs['page'] == 'actualizar':
             return self.ActualizarUsuario()
-
+        if kwargs['page'] == 'descarga_csv':
+            return self.Descarga_csv()
+        if kwargs['page'] == 'descarga_txt':
+            return self.Descarga_txt()
+        if kwargs['page'] == 'descarga_xlsx':
+            return self.Descarga_xlsx()
+        if kwargs['page'] == 'descarga_pdf':
+            return self.Descarga_pdf()
     '''
         @author:Cristian Botina
         @since:01/03/2018
@@ -55,6 +65,7 @@ class Usuarios(Resource):
         @return:Listado en formato Json
     '''
     def ObtenerUsuarios(self):
+        print(request.headers)
         lc_tkn = request.headers['Authorization']
         ln_opcn_mnu = request.form["id_mnu_ge"]
         validacionSeguridad = ValidacionSeguridad()
@@ -274,3 +285,170 @@ class Usuarios(Resource):
             la_rspsta['status']='error'
             la_rspsta['retorno']=errors.ERR_NO_ARCVO_DFNDO
         return la_rspsta
+
+    def Descarga_csv(self):
+        lc_tkn = request.headers['Authorization']
+        ln_opcn_mnu = request.form["id_mnu_ge"]
+        validacionSeguridad = ValidacionSeguridad()
+        val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
+        #val=True
+        lc_prmtrs=''
+
+        try:
+            ln_id_lgn_ge = request.form['id_login_ge']
+            lc_prmtrs = lc_prmtrs + "  and a.id = " + ln_id_lgn_ge
+        except Exception:
+            pass
+        try:
+            lc_lgn = request.form['login']
+            lc_prmtrs = lc_prmtrs + "  and lgn like '%" + lc_lgn + "%' "
+        except Exception:
+            pass
+        try:
+            ln_id_grpo_emprsrl = request.form['id_grpo_emprsrl']
+            lc_prmtrs = lc_prmtrs + "  and id_grpo_emprsrl = " + ln_id_grpo_emprsrl + " "
+        except Exception:
+            pass
+
+        if val:
+            Cursor = lc_cnctn.queryFree(" select "\
+                                    " a.id, b.lgn, b.nmbre_usro, b.fto_usro, case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo  "\
+                                    " from "\
+                                    " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
+                                    " a.id_lgn = b.id "\
+                                    " where "\
+                                    " a.estdo = true "\
+                                    + lc_prmtrs +
+                                    " order by "\
+                                    " b.lgn")
+            if Cursor :
+                result = descarga.csv(json.dumps(Cursor, indent=2),';')
+                return result
+
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
+
+    def Descarga_txt(self):
+        lc_tkn = request.headers['Authorization']
+        ln_opcn_mnu = request.form["id_mnu_ge"]
+        validacionSeguridad = ValidacionSeguridad()
+        val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
+        #val=True
+        lc_prmtrs=''
+
+        try:
+            ln_id_lgn_ge = request.form['id_login_ge']
+            lc_prmtrs = lc_prmtrs + "  and a.id = " + ln_id_lgn_ge
+        except Exception:
+            pass
+        try:
+            lc_lgn = request.form['login']
+            lc_prmtrs = lc_prmtrs + "  and lgn like '%" + lc_lgn + "%' "
+        except Exception:
+            pass
+        try:
+            ln_id_grpo_emprsrl = request.form['id_grpo_emprsrl']
+            lc_prmtrs = lc_prmtrs + "  and id_grpo_emprsrl = " + ln_id_grpo_emprsrl + " "
+        except Exception:
+            pass
+
+        if val:
+            Cursor = lc_cnctn.queryFree(" select "\
+                                    " a.id, b.lgn, b.nmbre_usro, b.fto_usro, case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo  "\
+                                    " from "\
+                                    " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
+                                    " a.id_lgn = b.id "\
+                                    " where "\
+                                    " a.estdo = true "\
+                                    + lc_prmtrs +
+                                    " order by "\
+                                    " b.lgn")
+            if Cursor :
+                result = descarga.text(json.dumps(Cursor, indent=2))
+                return result
+
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
+
+    def Descarga_xlsx(self):
+        lc_tkn = request.headers['Authorization']
+        ln_opcn_mnu = request.form["id_mnu_ge"]
+        validacionSeguridad = ValidacionSeguridad()
+        val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
+        #val=True
+        lc_prmtrs=''
+
+        try:
+            ln_id_lgn_ge = request.form['id_login_ge']
+            lc_prmtrs = lc_prmtrs + "  and a.id = " + ln_id_lgn_ge
+        except Exception:
+            pass
+        try:
+            lc_lgn = request.form['login']
+            lc_prmtrs = lc_prmtrs + "  and lgn like '%" + lc_lgn + "%' "
+        except Exception:
+            pass
+        try:
+            ln_id_grpo_emprsrl = request.form['id_grpo_emprsrl']
+            lc_prmtrs = lc_prmtrs + "  and id_grpo_emprsrl = " + ln_id_grpo_emprsrl + " "
+        except Exception:
+            pass
+
+        if val:
+            Cursor = lc_cnctn.queryFree(" select "\
+                                    " a.id, b.lgn, b.nmbre_usro, b.fto_usro, case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo  "\
+                                    " from "\
+                                    " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
+                                    " a.id_lgn = b.id "\
+                                    " where "\
+                                    " a.estdo = true "\
+                                    + lc_prmtrs +
+                                    " order by "\
+                                    " b.lgn")
+            if Cursor :
+                result = descarga.xlsx(json.dumps(Cursor, indent=2))
+                return result
+
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
+    def Descarga_pdf(self):
+        lc_tkn = request.headers['Authorization']
+        ln_opcn_mnu = request.form["id_mnu_ge"]
+        validacionSeguridad = ValidacionSeguridad()
+        val = validacionSeguridad.Principal(lc_tkn,ln_opcn_mnu,optns.OPCNS_MNU['Usuarios'])
+        #val=True
+        lc_prmtrs=''
+
+        try:
+            ln_id_lgn_ge = request.form['id_login_ge']
+            lc_prmtrs = lc_prmtrs + "  and a.id = " + ln_id_lgn_ge
+        except Exception:
+            pass
+        try:
+            lc_lgn = request.form['login']
+            lc_prmtrs = lc_prmtrs + "  and lgn like '%" + lc_lgn + "%' "
+        except Exception:
+            pass
+        try:
+            ln_id_grpo_emprsrl = request.form['id_grpo_emprsrl']
+            lc_prmtrs = lc_prmtrs + "  and id_grpo_emprsrl = " + ln_id_grpo_emprsrl + " "
+        except Exception:
+            pass
+
+        if val:
+            Cursor = lc_cnctn.queryFree(" select "\
+                                    " a.id, b.lgn, b.nmbre_usro, b.fto_usro, case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo  "\
+                                    " from "\
+                                    " "+str(dbConf.DB_SHMA)+".tblogins_ge a inner join "+str(dbConf.DB_SHMA)+".tblogins b on "\
+                                    " a.id_lgn = b.id "\
+                                    " where "\
+                                    " a.estdo = true "\
+                                    + lc_prmtrs +
+                                    " order by "\
+                                    " b.lgn")
+            if Cursor :
+                result = descarga.pdf(json.dumps(Cursor, indent=2))
+                return result
+
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)

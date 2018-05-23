@@ -5,20 +5,18 @@ Created on 24 ene. 2018
 '''
 
 
-import time, json, jwt
+import time, json
 
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField
 
-from SSI7X.Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from SSI7X.Static.Utils import Utils  # @UnresolvedImport
-import SSI7X.Static.config as conf  # @UnresolvedImport 
-import SSI7X.Static.config_DB as dbConf  # @UnresolvedImport   
-import SSI7X.Static.errors as errors  # @UnresolvedImport
-import SSI7X.Static.labels as labels  # @UnresolvedImport
-import SSI7X.Static.opciones_higia as optns  # @UnresolvedImport
-from SSI7X.ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
-from pip._vendor.webencodings.labels import LABELS
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
+import Static.config_DB as dbConf  # @UnresolvedImport   
+import Static.errors as errors  # @UnresolvedImport
+import Static.labels as labels  # @UnresolvedImport
+import Static.opciones_higia as optns  # @UnresolvedImport
+from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
 
 '''
     Declaracion de variables globales
@@ -244,7 +242,6 @@ class Preguntas(Resource):
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400) 
             if CursorValidar2:
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_RGSTRO_RPTDO},400) 
-                       
             self.PreguntaActualizaRegistro(a_prgnta_ge, 'tbpreguntas_seguridad_ge')
             # obtengo id_prgnta a partir del id
             Cursor = Pconnection.querySelect(dbConf.DB_SHMA + '.tbpreguntas_seguridad_ge', 'id_prgnta_sgrdd', "id=" + str(request.form['ln_id_prgnta_ge']))
