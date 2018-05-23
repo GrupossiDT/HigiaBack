@@ -169,7 +169,8 @@ class AutenticacionUsuarios(Resource):
                 if type(id_lgn_prfl_scrsl) is not dict:
                     return id_lgn_prfl_scrsl
 
-                strQuery = 'SELECT a."text",a.id_lgn_prfl_scrsl,a.id,a.id_mnu_ge,a.parentid,a.lnk as enlace,(d.id is Not Null) as favorito, '\
+                strQuery = 'SELECT a."text",a.id_lgn_prfl_scrsl,a.id,a.id_mnu_ge,a.parentid,a.lnk as enlace,'\
+                            '(case when d.id is null then false else d.estdo end) as favorito, '\
                             '(case when (select k.id from( '\
                             'select p.id from '+dbConf.DB_SHMA+'.tbpermisos_perfiles_menu as ppm '\
                             'left join '+dbConf.DB_SHMA+'.tbpermisos p on p.id=ppm.id_prmso '\
