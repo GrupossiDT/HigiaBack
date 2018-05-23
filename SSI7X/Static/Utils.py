@@ -1,7 +1,9 @@
 import json
+from flask import make_response
 from user_agents import parse
 from random import randint
 from pysimplesoap.client import SoapClient
+
 class Utils:
     def nice_json(self,arg, status):
         response = make_response(json.dumps(arg, sort_keys = True, indent=4), status)
@@ -30,4 +32,6 @@ class Utils:
             login = lc_lgn,
             clave = lc_clve
         )
+
         return getEnvioSMSResponse['return']
+

@@ -21,7 +21,7 @@ from Static.ConnectDB import ConnectDB  # @UnresolvedImport
 from Static.Ldap_connect import Conexion_ldap  # @UnresolvedImport
 from Static.Utils import Utils  # @UnresolvedImport
 import Static.config as conf  # @UnresolvedImport
-import Static.config_DB as dbConf  # @UnresolvedImport
+import Static.config_DB as dbConf  # @UnresolvedImport 
 import Static.errors as errors  # @UnresolvedImport
 import Static.labels as labels  # @UnresolvedImport
 from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
@@ -126,6 +126,7 @@ class AutenticacionUsuarios(Resource):
         if  ingreso:
 
             tmpData = validacionSeguridad.ObtenerDatosUsuario(request.form['username'])[0]
+            tmpData["id_scrsl"] = validacionSeguridad.validaUsuario(request.form['username'])["id_scrsl"]
             data = json.loads(json.dumps(tmpData, indent=2))
 
             _cookie_data = json.dumps(tmpData, sort_keys=True, indent=4)
@@ -277,4 +278,4 @@ class AutenticacionUsuarios(Resource):
             if lb_resultado:
                 return Utils.nice_json({labels.lbl_stts_success:"BYE"}, 200)
             else:
-return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_LOGOUT} , 400)
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_LOGOUT} , 400)

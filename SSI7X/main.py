@@ -10,6 +10,8 @@ from perfiles import Perfiles # @UnresolvedImport
 from Users import Usuarios # @UnresolvedImport
 from preguntas import Preguntas# @UnresolvedImport
 from menu import Menu# @UnresolvedImport
+from contratos import Contratos# @UnresolvedImport
+
 
 
 
@@ -30,6 +32,7 @@ api.add_resource(Perfiles,'/perfiles/<page>')
 api.add_resource(Preguntas,'/preguntasSg/<page>')
 api.add_resource(Usuarios,'/users/<page>')
 api.add_resource(Menu,'/menu/<page>')
+api.add_resource(Contratos,'/Contratos/<page>')
 
 
 if __name__ == '__main__':

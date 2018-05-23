@@ -115,6 +115,7 @@ class Perfiles(Resource):
             ln_id_undd_ngco = request.form["id_undd_ngco"]
 
             strSql = " select b.id, "\
+<<<<<<< HEAD
                     " a.cdgo ,a.dscrpcn "\
                     " ,case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo "\
                     " from "\
@@ -123,6 +124,16 @@ class Perfiles(Resource):
                     " where "\
                     " b.id_undd_ngco = "+str(ln_id_undd_ngco) +" "+ lc_dta +""\
                     " order by a.dscrpcn"
+=======
+                                    " a.cdgo ,a.dscrpcn "\
+                                    " ,case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo "\
+                                    " from "\
+                                    " "+dbConf.DB_SHMA+".tbperfiles a inner join "+" "+ dbConf.DB_SHMA+".tbperfiles_une b on "\
+                                    " a.id=b.id_prfl "\
+                                    " where "\
+                                    " b.id_undd_ngco = "+str(ln_id_undd_ngco) +" "+ lc_dta +""\
+                                    " order by a.dscrpcn"
+>>>>>>> refs/remotes/origin/edison.bejarano
             Cursor = lc_cnctn.queryFree(strSql)
             if Cursor :
                 data = json.loads(json.dumps(Cursor, indent=2))
@@ -191,6 +202,7 @@ class Perfiles(Resource):
         validacionSeguridad = ValidacionSeguridad()
 
         if validacionSeguridad.Principal(key,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
+<<<<<<< HEAD
             token = validacionSeguridad.ValidacionToken(key)
             datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]
             ln_id_grpo_emprsrl = datosUsuario['id_grpo_emprsrl']
@@ -415,3 +427,131 @@ class Perfiles(Resource):
                     objectValues["fcha_crcn"] = str(datetime.datetime.now()).split('.')[0]
                     objectValues["fcha_mdfccn"] = str(datetime.datetime.now()).split('.')[0]
                     lc_cnctn.queryInsert("ssi7x.tbpermisos_perfiles_menu",objectValues)
+=======
+
+            ln_id_prfl_une = request.form["id_prfl_une"]
+            ln_id_undd_ngco = request.form["id_undd_ngco"]
+
+            strSql ="SELECT * FROM( "\
+                    "SELECT m.dscrpcn as text,m.id as id_mnu,m.ordn,(case when p.id is not null then true else false end)::boolean as seleccionado  "\
+                    "FROM (select m.dscrpcn,mg.id,m.ordn from "+" "+dbConf.DB_SHMA+".tbmenu m "\
+                    "inner join" +" "+dbConf.DB_SHMA+".tbmenu_ge mg on m.id=mg.id_mnu  "\
+                    "where mg.id_grpo_emprsrl=2 and m.estdo=true and mg.estdo=true  "\
+                    ") AS M  "\
+                    "left join  "\
+                    "(select  "\
+                    "m.dscrpcn,mng.id from " +" "+dbConf.DB_SHMA+".tbperfiles as p  "\
+                    "inner join " +" "+dbConf.DB_SHMA+".tbperfiles_une as pu on pu.id_prfl= p.id  "\
+                    "inner Join " +" "+dbConf.DB_SHMA+".tbperfiles_une_menu as pum ON pu.id= pum.id_prfl_une  "\
+                    "inner join " +" "+dbConf.DB_SHMA+".tbmenu_ge mng ON pum.id_mnu_ge = mng.id  "\
+                    "inner join " +" "+dbConf.DB_SHMA+".tbmenu m ON m.id = mng.id_mnu  "\
+                    "where pu.id="+ln_id_prfl_une+" and pu.id_undd_ngco="+ln_id_undd_ngco+" and mng.id_grpo_emprsrl = 2  "\
+                    "and mng.estdo=true and m.estdo=true and pum.estdo=true"\
+                    ")as P ON P.id=M.id "\
+                    ") AS H order by CAST(H.ordn as integer)"
+            print(strSql)
+            Cursor = lc_cnctn.queryFree(strSql)
+            if Cursor :
+                data = json.loads(json.dumps(Cursor, indent=2))
+                return Utils.nice_json(data,200)
+            else:
+                return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
+
+    def gestionPermisos(self):
+
+        ln_opcn_mnu = request.form["id_mnu_ge"]
+
+        ln_id_undd_ngco = request.form["id_undd_ngco"]
+        ln_id_prfl_une = request.form["id_perfil_une"]
+        ls_data = request.form["ls_data"]
+        key = request.headers['Authorization']
+
+        validacionSeguridad = ValidacionSeguridad()
+
+        if validacionSeguridad.Principal(key,ln_opcn_mnu,optns.OPCNS_MNU['Perfiles']):
+            token = validacionSeguridad.ValidacionToken(key)
+            datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]
+            #Obtengo el cursor con todos los elementos de la consulta
+            Cursor = self.datos_perfil(ln_id_prfl_une,ls_data,2)
+            #Obtngo un array Json con las opciones de perfil
+            data = json.loads(json.dumps(Cursor, indent=2))
+
+            lc_query_actlzr = ""
+            lc_query_insrtr = ""
+            for obj in data:
+                #estdo: true, existe: true, id: 253, stdo_envdo: true
+                if obj["existe"] :
+                    if obj["stdo_envdo"] != obj["estdo"]:
+                        #queryUpdate(table,objectValues,clause = NULL)
+                        objectValues={}
+                        objectValues["estdo"] = str(obj["stdo_envdo"])
+                        objectValues["id_lgn_mdfccn_ge"] = str(datosUsuario["id_lgn_ge"])
+                        objectValues["fcha_mdfccn"]= str(datetime.datetime.now()).split('.')[0]
+                        clause = "id_prfl_une = " + str(ln_id_prfl_une) + " AND id_mnu_ge=" + str(obj["id"])
+                        lc_cnctn.queryUpdate(dbConf.DB_SHMA+".tbperfiles_une_menu",objectValues,clause)
+
+                else:
+                    if obj["stdo_envdo"]:
+                        objectValues={}
+                        objectValues["id_prfl_une"] = str(ln_id_prfl_une)
+                        objectValues["id_mnu_ge"] = str(obj["id"])
+                        objectValues["id_lgn_crcn_ge"] = str(ln_id_prfl_une)
+                        objectValues["id_lgn_mdfccn_ge"] = str(ln_id_prfl_une)
+                        objectValues["fcha_mdfccn"] = str(datetime.datetime.now()).split('.')[0]
+                        lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles_une_menu",objectValues)
+            '''
+            if len(lc_query_actlzr) > 0:
+                #print(lc_query_actlzr)
+                lc_cnctn.queryFree(lc_query_actlzr)
+
+            if len(lc_query_insrtr) > 0:
+                #print(lc_query_insrtr)
+                lc_cnctn.queryFree(lc_query_insrtr)
+            '''
+            return Utils.nice_json(data,200)
+
+        else:
+            return Utils.nice_json({labels.lbl_stts_success:errors.ERR_NO_ATRZCN},400)
+
+    def datos_perfil(self,ln_id_perfil_une,ls_data,ln_id_grpo_emprsrl):
+        lo_data=json.loads(ls_data)
+
+        #Creo un array con todos los id_mnu provenientes del front
+        l_id_mnu=[];
+        for obj in lo_data:
+            l_id_mnu.append(str(obj["id_mnu"]))
+
+        #Preparo un case para los valores enviados
+        ls_case="(case"
+        for obj in lo_data:
+            ls_case += " when id=" +str(obj["id_mnu"]) + " then " + str(obj["seleccionado"])
+        ls_case+=" end) as stdo_envdo"
+
+        #Convierto el array en una cadena con los elementos del array separados por comas
+        ls_id_mnu = ','.join(map(str, l_id_mnu))
+        '''
+        Es importante el orden tomando encuenta que primero seran los estados true,
+        seguidos de los false y por ultimo los null.
+        '''
+        strSql="select enviados.id, "\
+                "(case  when actuales.estdo is NULL then false else true end) existe, "\
+                "actuales.estdo,enviados.stdo_envdo from "\
+                "(select "+ str(ln_id_perfil_une)+" as id_prfl_une,id,"+ ls_case +" "\
+                "from " +" "+dbConf.DB_SHMA+".tbmenu_ge "\
+                "where id in("+ls_id_mnu+") and id_grpo_emprsrl="+ str(ln_id_grpo_emprsrl)+""\
+                "group by id "\
+                ") AS enviados "\
+                "left join "\
+                "(select pum.id_prfl_une,pum.id_mnu_ge,pum.estdo from " +" "+dbConf.DB_SHMA+".tbperfiles_une_menu pum "\
+                "inner join " +" "+dbConf.DB_SHMA+".tbperfiles_une pu on pu.id = pum.id_prfl_une "\
+                "inner join " +" "+dbConf.DB_SHMA+".tbmenu_ge mg on mg.id = pum.id_mnu_ge "\
+                "where pum.id_mnu_ge in("+ls_id_mnu+") "\
+                "and pum.id_prfl_une = "+ str(ln_id_perfil_une)+" "\
+                "and mg.id_grpo_emprsrl="+ str(ln_id_grpo_emprsrl)+") as actuales "\
+                "on actuales.id_mnu_ge=enviados.id "\
+                "order by (case when actuales.estdo= true then 1 when actuales.estdo=false then 2 else 3 end) ASC,enviados.id ASC"
+        Cursor = lc_cnctn.queryFree(strSql)
+        return Cursor
+>>>>>>> refs/remotes/origin/edison.bejarano
