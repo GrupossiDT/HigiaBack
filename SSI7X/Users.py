@@ -57,8 +57,8 @@ class Usuarios(Resource):
             return self.validaclaveTemporal()
         elif kwargs['page'] == 'actualizarContrasena':
             return self.actualizarContrasena()
-
-
+        elif kwargs['page'] == 'actualizarContrenaInterna':
+            return self.actualizarContrenaInterna()
 
 
 
@@ -211,10 +211,12 @@ class Usuarios(Resource):
         lc_estdo = request.form["estdo"]
 
         '''
-            Validar que la contrasena cumpla con el Patron de contraseas
+            Validar que la contrasena cumpla con el Patron de contraseas, excepto que tenga el campo vacio
         '''
-        if not re.match(conf.EXPRESION_CLAVE_USUARIO, request.form['password']):
-            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
+        if request.form['password']!="":
+            if not re.match(conf.EXPRESION_CLAVE_USUARIO, request.form['password']):
+                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
+
 
 
         validacionSeguridad = ValidacionSeguridad()
@@ -403,6 +405,67 @@ class Usuarios(Resource):
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
 
+    def actualizarContrenaInterna(self):
+        lc_clve_actl = request.form['clve_tmprl']
+        lc_nva_cntrsna = request.form['nva_cntrsna']
+        lc_rnva_cntrsna = request.form['rnva_cntrsna']
+        ld_fcha_actl = time.ctime()
+
+        ####lc_clve_actl = hashlib.md5(lc_clve_actl.encode('utf-8')).hexdigest()
+        lc_id_lgn_ge = request.form['id_lgn_ge']
+
+        '''
+            Validaa nueva contrasena y la clave temporal tiene que ser iguales
+        '''
+        if lc_nva_cntrsna != lc_rnva_cntrsna:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CNCD_CNTSNA},400)
+
+        '''
+            Validar que la contrasena cumpla con el Patron de contraseas
+        '''
+        if not re.match(conf.EXPRESION_CLAVE_USUARIO, lc_nva_cntrsna):
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
+
+        lc_nva_cntrsna = hashlib.md5(lc_nva_cntrsna.encode('utf-8')).hexdigest()
+        lc_clve_actl = hashlib.md5(lc_clve_actl.encode('utf-8')).hexdigest()
+
+        '''
+            Actualizar el usuario si coincide con la contraseña actual que ingreso
+        '''
+        lc_query_usro = " select "\
+                            	" b.id as id_lgn_ge, "\
+                            	" a.id as id_lgn "\
+                            " from "\
+                            	" "+dbConf.DB_SHMA+".tblogins a "\
+                            " inner join "+dbConf.DB_SHMA+".tblogins_ge b on "\
+                            	" a.id = b.id_lgn "\
+                            " where "\
+                            	" b.id = "+lc_id_lgn_ge+" "\
+                            	" and cntrsna = '"+lc_clve_actl+"' LIMIT 1 ";
+        Cursor_clv_tmp2 = lc_cnctn.queryFree(lc_query_usro)
+
+        if Cursor_clv_tmp2 :
+            data_usro = json.loads(json.dumps(Cursor_clv_tmp2[0], indent=2))
+
+            #Actualiza login
+            la_clmns_actlzr_lgn = {}
+            la_clmns_actlzr_lgn['id']=str(data_usro['id_lgn'])
+            la_clmns_actlzr_lgn['cntrsna']=str(lc_nva_cntrsna)
+            self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn,'tblogins')
+
+            la_clmns_actlzr_lgn_ge = {}
+            la_clmns_actlzr_lgn_ge['id']=str(data_usro['id_lgn_ge'])
+            la_clmns_actlzr_lgn_ge['fcha_mdfccn']=str(ld_fcha_actl)
+            self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn_ge,'tblogins_ge')
+
+            return Utils.nice_json({labels.lbl_stts_success:True},200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CNTRSNA_INVLDA},400)
+
+
+
+        #return Utils.nice_json({"error":"contraseña prueba"},400)
+
     def actualizarContrasena(self):
 
         lc_clve_tmprl = request.form['clve_tmprl']
@@ -411,6 +474,7 @@ class Usuarios(Resource):
         responsed = self.validaclaveTemporal()
         ld_fcha_actl = time.ctime()
         lc_cntrsna = hashlib.md5(lc_nva_cntrsna.encode('utf-8')).hexdigest()
+
 
         '''
             Validaa nueva contrasena y la clave temporal tiene que ser iguales
