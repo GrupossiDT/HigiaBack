@@ -277,4 +277,4 @@ class AutenticacionUsuarios(Resource):
             if lb_resultado:
                 return Utils.nice_json({labels.lbl_stts_success:"BYE"}, 200)
             else:
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_LOGOUT} , 400)
+return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_LOGOUT} , 400)

@@ -93,11 +93,14 @@ class Menu(Resource):
             return self.crear()
         elif kwargs['page'] == 'actualizar':
             return self.actualizar()
+<<<<<<< HEAD
         elif kwargs['page'] == 'agregar_favorito':
             return self.agregar_favorito()
         elif kwargs['page'] == 'remover_favorito':
             return self.remover_favorito()
 
+=======
+>>>>>>> refs/remotes/origin/cristian.botina
 
     '''
         def crear
@@ -269,6 +272,7 @@ class Menu(Resource):
 
     def PreguntaActualizaRegistro(self, objectValues, table_name):
         return Pconnection.queryUpdate(dbConf.DB_SHMA + "." + str(table_name), objectValues, 'id=' + str(objectValues['id']))
+<<<<<<< HEAD
 
     '''
         def agregar_favorito
@@ -374,3 +378,5 @@ class Menu(Resource):
                     'where lpm.id_lgn_prfl_scrsl='+str(id_prfl_scrsl) +' and lpm.id_mnu_ge='+str(id_mnu_ge)
         lo_current = Pconnection.queryFree(strQuery)[0]
         return lo_current
+=======
+>>>>>>> refs/remotes/origin/cristian.botina
