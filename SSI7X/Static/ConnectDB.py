@@ -45,7 +45,7 @@ class ConnectDB():
             strColumnValues += "'"+value + "',"
 
         strQuery = "INSERT INTO "+table+" (" + strColumnNames.strip(',') +") VALUES("+ strColumnValues.strip(',') +")"
-
+        print(strQuery)
         if returnColumn != NULL:
             strQuery += " RETURNING " + returnColumn
 
