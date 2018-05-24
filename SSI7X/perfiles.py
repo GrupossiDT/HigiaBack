@@ -45,6 +45,8 @@ class Perfiles(Resource):
             return self.obtenerOpcionesPerfil()
         if kwargs['page']=='gestionPermisos':
             return self.gestionPermisos()
+        if kwargs['page']=='perfiles_sucursales':
+            return self.perfiles_sucursales()
 
     def crear(self):
         lob_rspsta = DatosPerfil(request.form)
@@ -115,15 +117,16 @@ class Perfiles(Resource):
             ln_id_undd_ngco = request.form["id_undd_ngco"]
 
             strSql = " select b.id, "\
-                    " a.cdgo ,a.dscrpcn "\
-                    " ,case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo "\
-                    " from "\
-                    " ssi7x.tbperfiles a inner join  ssi7x.tbperfiles_une b on "\
-                    " a.id=b.id_prfl "\
-                    " where "\
-                    " b.id_undd_ngco = "+str(ln_id_undd_ngco) +" "+ lc_dta +""\
-                    " order by a.dscrpcn"
+                                    " a.cdgo ,a.dscrpcn "\
+                                    " ,case when b.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo "\
+                                    " from "\
+                                    " "+str(dbConf.DB_SHMA)+".tbperfiles a inner join "+" "+str(dbConf.DB_SHMA)+".tbperfiles_une b on "\
+                                    " a.id=b.id_prfl "\
+                                    " where "\
+                                    " b.id_undd_ngco = "+str(ln_id_undd_ngco) +" "+ lc_dta +""\
+                                    " order by a.dscrpcn"
             Cursor = lc_cnctn.queryFree(strSql)
+            
             if Cursor :
                 data = json.loads(json.dumps(Cursor, indent=2))
                 return Utils.nice_json(data,200)
@@ -168,7 +171,7 @@ class Perfiles(Resource):
             arrayValuesDetalle['fcha_mdfccn']       =  str(fecha_act)
             lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles_une'), arrayValuesDetalle,'id='+str(ln_id_prfl_une))
             #obtengo id_lgn a partir del id_lgn_ge
-            Cursor = lc_cnctn.querySelect(dbConf.DB_SHMA +'.tbperfiles_une', 'id_prfl', "id="+ln_id_prfl_une)
+            Cursor = lc_cnctn.querySelect(str(dbConf.DB_SHMA) +'.tbperfiles_une', 'id_prfl', "id="+ln_id_prfl_une)
             if Cursor :
                 data        = json.loads(json.dumps(Cursor[0], indent=2))
                 ln_id_prfl  = data['id_prfl']
@@ -176,7 +179,7 @@ class Perfiles(Resource):
                 arrayValues['cdgo']   = str(lc_cdgo)
                 arrayValues['dscrpcn']= lc_dscrpcn
                 arrayValues['estdo']=  lb_estdo
-                lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles'), arrayValues,'id ='+str(ln_id_prfl))
+                lc_cnctn.queryUpdate(str(dbConf.DB_SHMA)+"."+str('tbperfiles'), arrayValues,'id ='+str(ln_id_prfl))
                 return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200)
             else:
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400)
@@ -283,8 +286,8 @@ class Perfiles(Resource):
                         objectValues={}
                         objectValues["id_prfl_une"] = str(ln_id_prfl_une)
                         objectValues["id_mnu_ge"] = str(obj["id"])
-                        objectValues["id_lgn_crcn_ge"] = str(ln_id_prfl_une)
-                        objectValues["id_lgn_mdfccn_ge"] = str(ln_id_prfl_une)
+                        objectValues["id_lgn_crcn_ge"] = str(datosUsuario['id_lgn_ge'])
+                        objectValues["id_lgn_mdfccn_ge"] = str(datosUsuario['id_lgn_ge'])
                         objectValues["fcha_mdfccn"] = str(datetime.datetime.now()).split('.')[0]
                         lc_cnctn.queryInsert("ssi7x.tbperfiles_une_menu",objectValues)
 
@@ -345,14 +348,14 @@ class Perfiles(Resource):
         strSql ="select p.id as id_prmso, "+ str(lo_data["id_mnu"]) +" as id_mnu_ge_enviado, h.id_mnu_ge,h.id_prfl_une_mnu,"+ str(lo_data["id_prfl_une_mnu"]) +" as id_prfl_une_mnu_env , h.estdo_prfl_une_mnu, h.estdo_mnu_ge, "\
                 "(case when h.id_prfl_une_mnu is not null then true else false end )::boolean as existe, h.estdo_prfl_une_mnu as estado,h.estdo_prmss_prfls_mnu "\
                 "FROM(select "\
-            	"m.id as id_mnu, m.lnk,m.estdo as mnu_estdo,"\
-            	"mg.id as id_mnu_ge,"\
-            	"mg.estdo as estdo_mnu_ge,"\
-            	"pum.id as id_prfl_une_mnu,"\
-            	"pum.estdo as estdo_prfl_une_mnu,"\
+                "m.id as id_mnu, m.lnk,m.estdo as mnu_estdo,"\
+                "mg.id as id_mnu_ge,"\
+                "mg.estdo as estdo_mnu_ge,"\
+                "pum.id as id_prfl_une_mnu,"\
+                "pum.estdo as estdo_prfl_une_mnu,"\
                 "ppm.estdo as estdo_prmss_prfls_mnu,"\
-            	"ppm.id as id_prmss_prfls_mnu,"\
-            	"ppm.id_prmso "\
+                "ppm.id as id_prmss_prfls_mnu,"\
+                "ppm.id_prmso "\
                 "from ssi7x.tbmenu as m "\
                 "inner join ssi7x.tbmenu_ge mg on m.id = mg.id_mnu "\
                 "inner join ssi7x.tbperfiles_une_menu as pum ON pum.id_mnu_ge=mg.id "\
@@ -415,3 +418,41 @@ class Perfiles(Resource):
                     objectValues["fcha_crcn"] = str(datetime.datetime.now()).split('.')[0]
                     objectValues["fcha_mdfccn"] = str(datetime.datetime.now()).split('.')[0]
                     lc_cnctn.queryInsert("ssi7x.tbpermisos_perfiles_menu",objectValues)
+
+    def perfiles_sucursales(self):
+
+        ln_id_lgn_ge = request.form["id_lgn_ge"]
+        
+        strSql ="select lgn_prfl_scrsl.id  as lgn_prfl_scrsl,"\
+        "prfl.cdgo as cdgo_prfl,prfl.dscrpcn as dscrpcn_prfl,"\
+        "lgn_prfl_scrsl.id_prfl_une as id_prfl_une,"\
+        "lgn_prfl_scrsl.estdo as estdo,"\
+        "lgn_prfl_scrsl.mrca_scrsl_dfcto as mrca_scrsl_dfcto, "\
+        "scrsls.nmbre_scrsl as nmbre_scrsl, "\
+        "lgn_prfl_scrsl.id_scrsl as id_scrsl, "\
+        "lgn_prfl_scrsl.id_lgn_ge as id_lgn_ge, "\
+        "lgn_prfl_scrsl.id_lgn_crcn_ge as id_lgn_crcn_ge, "\
+        "lgn_prfl_scrsl.id_lgn_mdfccn_ge as id_lgn_mdfccn_ge, "\
+        "lgn_prfl_scrsl.fcha_crcn::text as fcha_crcn, "\
+        "lgn_prfl_scrsl.fcha_mdfccn::text as fcha_mdfccn, "\
+        "undds_ngcio.nmbre_rzn_scl as undds_ngcio "\
+        "from "\
+        " "+str(dbConf.DB_SHMA)+".tblogins_perfiles_sucursales as lgn_prfl_scrsl    inner join "\
+        " "+str(dbConf.DB_SHMA)+".tbperfiles_une as prfl_une "\
+        "on lgn_prfl_scrsl.id_prfl_une = prfl_une.id    inner join "\
+        " "+str(dbConf.DB_SHMA)+".tbperfiles as prfl "\
+        "on prfl.id = prfl_une.id_prfl    inner join  "\
+        " "+str(dbConf.DB_SHMA)+".tbsucursales as scrsls  "\
+        "on scrsls.id = lgn_prfl_scrsl.id_scrsl    inner join  "\
+        " "+str(dbConf.DB_SHMA)+".tbunidades_negocio as undds_ngcio "\
+        "on undds_ngcio.id = scrsls.id_undd_ngco  "\
+        "where lgn_prfl_scrsl.id_lgn_ge = "+str(ln_id_lgn_ge)+""\
+         " order by prfl.dscrpcn "
+                                            
+        Cursor = lc_cnctn.queryFree(strSql)
+        print(type(Cursor) )
+        if Cursor :
+            data = json.loads(json.dumps(Cursor, indent=2))
+            return Utils.nice_json(data,200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
