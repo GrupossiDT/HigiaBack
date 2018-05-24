@@ -1,6 +1,5 @@
 '''
 Created on 02 feb. 2018
-
 @author: luis.aragon
 '''
 
@@ -22,7 +21,6 @@ from wtforms.fields.core import IntegerField
 
 '''
     Declaracion de variables globales
-
 '''
 
 Utils = Utils()
@@ -51,7 +49,6 @@ class Acceso(Form):
     @since:02-02-2018
     @summary: Acceso a envio de campos para actualizar opcion menu
     @param Form: request.form
-
 '''
 
 
@@ -71,7 +68,6 @@ class ActualizarAcceso(Form):
     @summary:Clase que contiene metodos de funcionalidades CRUD de opciones para el menu
     @param Form:Parametro Formulario que recibe recurso que provee la API
     @return:N/A,  no aplican parametros
-
 '''
 
 
@@ -93,10 +89,6 @@ class Menu(Resource):
             return self.crear()
         elif kwargs['page'] == 'actualizar':
             return self.actualizar()
-        elif kwargs['page'] == 'agregar_favorito':
-            return self.agregar_favorito()
-        elif kwargs['page'] == 'remover_favorito':
-            return self.remover_favorito()
 
     '''
         def crear
@@ -105,7 +97,6 @@ class Menu(Resource):
         @summary: metodo que permite crear una opcion para el menu, a partir de la autorizacion que contiene el headers del token y el permiso de la accion
         @param:
         @return:retorna Json del objeto creado
-
     '''
 
     def crear(self):
@@ -154,7 +145,6 @@ class Menu(Resource):
         @summary: metodo que permite listar preguntas de seguridad, a partir de la autorizacion que contiene el headers del token y el permiso de la accion
         @param:
         @return:retorna objetos listados
-
     '''
 
     def listar(self):
@@ -200,7 +190,6 @@ class Menu(Resource):
                                 " where "\
                                 " b.estdo = true and id_grpo_emprsrl = "+ln_id_grpo_emprsrl+" "\
                                 + str(lc_prmtrs)
-            print(StrSql)
             Cursor = Pconnection.queryFree(StrSql)
             if  Cursor :
                 data = json.loads(json.dumps(Cursor, indent=2))
@@ -217,7 +206,6 @@ class Menu(Resource):
         @summary: metodo que permite actualizar preguntas de seguridad, a partir de la autorizacion que contiene el headers del token y el permiso de la accion
         @param:
         @return:retorna objetos listados
-
     '''
 
     def actualizar(self):
@@ -268,108 +256,3 @@ class Menu(Resource):
 
     def PreguntaActualizaRegistro(self, objectValues, table_name):
         return Pconnection.queryUpdate(dbConf.DB_SHMA + "." + str(table_name), objectValues, 'id=' + str(objectValues['id']))
-
-    '''
-        def agregar_favorito
-        @author: Robin.Valencia
-        @since:16-05-2018
-        @summary: metodo que permite agregar un item de menu a favorito si y solo si tiene menos de 5 favoritos y si es un enlace y es accesible por el perfil.
-        @param: por request el id_menu_ge,
-        @return:retorna
-    '''
-    def agregar_favorito(self):
-        key = request.headers['Authorization']
-        if key:
-            validacionSeguridad.ValidacionToken(key)
-            if validacionSeguridad :
-                token = Pconnection.querySelect(dbConf.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
-                tmp_data = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
-                datosUsuario = validacionSeguridad.ObtenerDatosUsuario(tmp_data['lgn'])[0]
-                id_lgn_prfl_scrsl = validacionSeguridad.validaUsuario(tmp_data['lgn'])
-
-
-                ld_id_mnu_ge = request.form['id_mnu_ge']
-
-                #consulta el id_lgn_prfl_mnu
-                ld_id_lgn_prfl_mnu = Pconnection.querySelect(dbConf.DB_SHMA+'.tblogins_perfiles_menu', "id", "id_lgn_prfl_scrsl='"+str(id_lgn_prfl_scrsl['id_prfl_scrsl'])+"' and id_mnu_ge='"+str(ld_id_mnu_ge)+"' and estdo is true")[0]
-                #consulta cuantos favoritos tiene
-
-                cntdd_fvrts = self.get_cant_favoritos(id_lgn_prfl_scrsl)
-
-                if cntdd_fvrts < 5:
-                    #Buscar si existe el elemento y si el estado es true
-                    lo_current = self.busca_favorito(id_lgn_prfl_scrsl['id_prfl_scrsl'],ld_id_mnu_ge)
-                    arrayValues = {}
-                    if not lo_current:#Inserta
-                        arrayValues['id_lgn_prfl_mnu'] = str(ld_id_lgn_prfl_mnu['id'])
-                        arrayValues['id_lgn_crcn_ge'] = str(datosUsuario['id_lgn_ge'])
-                        arrayValues['id_lgn_mdfccn_ge'] = str(datosUsuario['id_lgn_ge'])
-                        arrayValues['fcha_crcn'] = str(ld_fcha_actl)
-                        arrayValues['fcha_mdfccn'] = str(ld_fcha_actl)
-                        result = Pconnection.queryInsert(dbConf.DB_SHMA+".tbfavoritosmenu",arrayValues)
-                    else:#actualiza
-                        if not lo_current['estdo']:
-                            arrayValues['estdo'] = 'true'
-                            Pconnection.queryUpdate(dbConf.DB_SHMA +'.tbfavoritosmenu',arrayValues,'id='+str(lo_current['id']))
-
-                    return Utils.nice_json({labels.lbl_stts_success:labels.FVRTO_AGRGDO}, 200)
-                else:
-                    return Utils.nice_json({labels.lbl_stts_error:errors.ERR_EXCDE_CNT_FVRTS}, 200)
-            else:
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_SN_SSN}, 400)
-        else:
-            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_SN_PRMTRS}, 400)
-
-    def remover_favorito(self):
-        #return Utils.nice_json({labels.lbl_stts_success:labels.FVRTO_BRRDO}, 200)
-        key = request.headers['Authorization']
-        if key:
-            validacionSeguridad.ValidacionToken(key)
-            if validacionSeguridad :
-                token = Pconnection.querySelect(dbConf.DB_SHMA+'.tbgestion_accesos', "token", "key='"+key+"' and estdo is true")[0]
-                tmp_data = jwt.decode(token["token"], conf.SS_TKN_SCRET_KEY+key, 'utf-8')
-                datosUsuario = validacionSeguridad.ObtenerDatosUsuario(tmp_data['lgn'])[0]
-                id_lgn_prfl_scrsl = validacionSeguridad.validaUsuario(tmp_data['lgn'])
-                ld_id_mnu_ge = request.form['id_mnu_ge']
-                #busco el favorito
-                lo_current = self.busca_favorito(id_lgn_prfl_scrsl['id_prfl_scrsl'],ld_id_mnu_ge)
-                arrayValues = {}
-                arrayValues['estdo'] = 'false'
-                Pconnection.queryUpdate(dbConf.DB_SHMA +'.tbfavoritosmenu',arrayValues,'id='+str(lo_current['id']))
-                return Utils.nice_json({labels.lbl_stts_success:labels.FVRTO_BRRDO}, 200)
-            else:
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_SN_PRMTRS}, 400)
-        else:
-            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_SN_PRMTRS}, 400)
-
-
-    '''
-        def agregar_favorito
-        @author: Robin.Valencia
-        @since:21-05-2018
-        @summary: metodo que permite conocer la cantidad de favoritos de un usuario con su id_lgn_prfl_scrsl
-        @param: id_lgn_prfl_scrsl
-        @return:retorna la cantidad de foritos
-    '''
-    def get_cant_favoritos(self,id_lgn_prfl_scrsl):
-            strQuery ='select count(1) cntdd_fvrts from '+ dbConf.DB_SHMA +'.tbfavoritosmenu fm '\
-                        'left join '+ dbConf.DB_SHMA +'.tblogins_perfiles_menu lpm on lpm.id=fm.id_lgn_prfl_mnu '\
-                        'where lpm.id_lgn_prfl_scrsl='+str(id_lgn_prfl_scrsl['id_prfl_scrsl']) +' and fm.estdo=true'
-            favoritos = Pconnection.queryFree(strQuery)[0]
-
-            return favoritos['cntdd_fvrts']
-
-    '''
-        def agregar_favorito
-        @author: Robin.Valencia
-        @since:21-05-2018
-        @summary: busca un favorito de un usuario
-        @param: id_lgn_prfl_scrsl
-        @return: id del favorito,id_mnu_ge, y el estdo de un favorito
-    '''
-    def busca_favorito(self, id_prfl_scrsl, id_mnu_ge):
-        strQuery ='select fm.id,lpm.id_mnu_ge,fm.estdo from '+ dbConf.DB_SHMA +'.tbfavoritosmenu fm '\
-                    'left join '+ dbConf.DB_SHMA +'.tblogins_perfiles_menu lpm on lpm.id=fm.id_lgn_prfl_mnu '\
-                    'where lpm.id_lgn_prfl_scrsl='+str(id_prfl_scrsl) +' and lpm.id_mnu_ge='+str(id_mnu_ge)
-        lo_current = Pconnection.queryFree(strQuery)[0]
-        return lo_current
