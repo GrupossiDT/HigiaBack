@@ -14,16 +14,18 @@ import time,hashlib,json #@UnresolvedImport
 from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import Static.config_DB as dbConf # @UnresolvedImport
 from Static.UploadFiles import UploadFiles  # @UnresolvedImport
+from descarga import Descarga
 from mail import correo
 from IPy import IP
 import socket
 import re
 import requests
 
-
 lc_cnctn = ConnectDB()
 Utils = Utils()
 validacionSeguridad = ValidacionSeguridad()
+
+descarga = Descarga()
 
 class ActualizarAcceso(Form):
     id_login_ge = StringField(labels.lbl_nmbr_usrs,[validators.DataRequired(message=errors.ERR_NO_SN_PRMTRS)])
