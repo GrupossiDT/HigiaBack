@@ -61,6 +61,14 @@ class Usuarios(Resource):
             return self.actualizarContrasena()
         elif kwargs['page'] == 'actualizarContrenaInterna':
             return self.actualizarContrenaInterna()
+        elif kwargs['page'] == 'descarga_csv':
+            return self.Descarga_csv()
+        elif kwargs['page'] == 'descarga_txt':
+            return self.Descarga_txt()
+        elif kwargs['page'] == 'descarga_xlsx':
+            return self.Descarga_xlsx()
+        elif kwargs['page'] == 'descarga_pdf':
+            return self.Descarga_pdf()
 
 
 
@@ -669,6 +677,7 @@ class Usuarios(Resource):
 
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
+
     def Descarga_pdf(self):
         lc_tkn = request.headers['Authorization']
         ln_opcn_mnu = request.form["id_mnu_ge"]
