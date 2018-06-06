@@ -16,6 +16,10 @@ import Static.config_DB as dbConf # @UnresolvedImport
 import Static.config as conf  # @UnresolvedImport
 import time,json,jwt
 import datetime
+from psycopg2.sql import NULL
+from lib2to3.fixer_util import Number
+from pandas.io import sql
+from pyasn1.type.univ import Null
 
 #Declaracion de variables globales
 Utils = Utils()
@@ -30,6 +34,13 @@ class DatosUpdate(Form):
     cdgo    = StringField(labels.lbl_cdgo_prfl,[validators.DataRequired(message=errors.ERR_NO_Cdgo)])
     dscrpcn = StringField(labels.lbl_dscrpcn_prfl,[validators.DataRequired(message=errors.ERR_NO_Dscrpcn)])
     id_prfl_une = IntegerField(labels.lbl_id_prfl,[validators.DataRequired(message=errors.ERR_NO_ID)])
+
+class Datos_perfiles_sucursales(Form):
+    print()
+    id = IntegerField(labels.lbl_id_lgn_prfl_scrsl,[validators.DataRequired(message=errors.ERR_NO_ID)])
+    id_undds_ngcio = IntegerField(labels.lbl_id_undds_ngcio,[validators.DataRequired(message=errors.ERR_NO_DTOS)])
+    id_scrsl = IntegerField(labels.lbl_id_scrsl,[validators.DataRequired(message=errors.ERR_NO_DTOS)])
+    id_prfl_une = IntegerField(labels.lbl_id_prfl,[validators.DataRequired(message=errors.ERR_NO_DTOS)])
 
 class Perfiles(Resource):
 
@@ -47,6 +58,12 @@ class Perfiles(Resource):
             return self.gestionPermisos()
         if kwargs['page']=='perfiles_sucursales':
             return self.perfiles_sucursales()
+        if kwargs['page']=='actualizar_perfiles_sucursales':
+            return self.actualizar_perfiles_sucursales()
+        if kwargs['page']=='crear_perfiles_sucursales':
+            return self.crear_perfiles_sucursales()
+           
+
 
     def crear(self):
         lob_rspsta = DatosPerfil(request.form)
@@ -78,7 +95,7 @@ class Perfiles(Resource):
 
 
             ln_id_prfl =  lc_cnctn.queryInsert(dbConf.DB_SHMA+".tbperfiles", arrayValues,'id')
-            
+
             if ln_id_prfl:
                 arrayValuesDetalle={}
                 arrayValuesDetalle['id_prfl'] = str(ln_id_prfl)
@@ -396,6 +413,8 @@ class Perfiles(Resource):
                 lc_permiso = 9
                 lc_estdo_envdo = lo_data["exprtr"]
                 ln_id_perfil_une_mnu = obj["id_prfl_une_mnu"]
+                
+            
 
             if ln_exste:
 
@@ -423,11 +442,11 @@ class Perfiles(Resource):
 
         ln_id_lgn_ge = request.form["id_lgn_ge"]
         
-        strSql ="select lgn_prfl_scrsl.id  as lgn_prfl_scrsl,"\
+        strSql ="select lgn_prfl_scrsl.id  as id_lgn_prfl_scrsl,"\
         "prfl.cdgo as cdgo_prfl,prfl.dscrpcn as dscrpcn_prfl,"\
         "lgn_prfl_scrsl.id_prfl_une as id_prfl_une,"\
-        "lgn_prfl_scrsl.estdo as estdo,"\
-        "lgn_prfl_scrsl.mrca_scrsl_dfcto as mrca_scrsl_dfcto, "\
+        "case when lgn_prfl_scrsl.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo, "\
+        "case when lgn_prfl_scrsl.mrca_scrsl_dfcto = true then 'ACTIVO' else 'INACTIVO' end as mrca_scrsl_dfcto, "\
         "scrsls.nmbre_scrsl as nmbre_scrsl, "\
         "lgn_prfl_scrsl.id_scrsl as id_scrsl, "\
         "lgn_prfl_scrsl.id_lgn_ge as id_lgn_ge, "\
@@ -435,7 +454,15 @@ class Perfiles(Resource):
         "lgn_prfl_scrsl.id_lgn_mdfccn_ge as id_lgn_mdfccn_ge, "\
         "lgn_prfl_scrsl.fcha_crcn::text as fcha_crcn, "\
         "lgn_prfl_scrsl.fcha_mdfccn::text as fcha_mdfccn, "\
-        "undds_ngcio.nmbre_rzn_scl as undds_ngcio "\
+        "undds_ngcio.nmbre_rzn_scl as undds_ngcio, "\
+        "undds_ngcio.id as id_undds_ngcio, "\
+        "lgn_prfl_scrsl.id_frma_pgo_dfcto_une as id_frma_pgo_dfcto_une, "\
+        "lgn_prfl_scrsl.id_cnl_rcdo_dfcto_une as id_cnl_rcdo_dfcto_une, "\
+        "lgn_prfl_scrsl.cntrl_cmprbnte as cntrl_cmprbnte, "\
+        "lgn_prfl_scrsl.cntrl_cja_mnr as cntrl_cja_mnr, "\
+        "lgn_prfl_scrsl.cntrl_atrzcn as cntrl_atrzcn, "\
+        "lgn_prfl_scrsl.mnto_rmblso_pac::text as mnto_rmblso_pac, "\
+        "lgn_prfl_scrsl.gdgt_sgmnto_trsldo as gdgt_sgmnto_trsldo,lgns.nmbre_usro "\
         "from "\
         " "+str(dbConf.DB_SHMA)+".tblogins_perfiles_sucursales as lgn_prfl_scrsl    inner join "\
         " "+str(dbConf.DB_SHMA)+".tbperfiles_une as prfl_une "\
@@ -445,7 +472,11 @@ class Perfiles(Resource):
         " "+str(dbConf.DB_SHMA)+".tbsucursales as scrsls  "\
         "on scrsls.id = lgn_prfl_scrsl.id_scrsl    inner join  "\
         " "+str(dbConf.DB_SHMA)+".tbunidades_negocio as undds_ngcio "\
-        "on undds_ngcio.id = scrsls.id_undd_ngco  "\
+        "on undds_ngcio.id = scrsls.id_undd_ngco inner join "\
+        " "+str(dbConf.DB_SHMA)+".tblogins_ge as lgns_ge   "\
+        "on lgns_ge.id = lgn_prfl_scrsl.id_lgn_ge inner join "\
+        " "+str(dbConf.DB_SHMA)+".tblogins as lgns  "\
+        "on lgns_ge.id_lgn = lgns.id  "\
         "where lgn_prfl_scrsl.id_lgn_ge = "+str(ln_id_lgn_ge)+""\
          " order by prfl.dscrpcn "
                                             
@@ -455,4 +486,101 @@ class Perfiles(Resource):
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data,200)
         else:
-            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)       
+            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
+        
+    def actualizar_perfiles_sucursales(self):
+       
+        lob_rspsta = Datos_perfiles_sucursales(request.form)
+        if not lob_rspsta.validate():
+            return Utils.nice_json({labels.lbl_stts_error:lob_rspsta.errors},400)
+        
+        key = request.headers['Authorization']
+        validacionSeguridad = ValidacionSeguridad()
+        token = validacionSeguridad.ValidacionToken(key)
+        datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]
+        arrayValues={}
+                  
+        ln_id=request.form["id"]
+        ln_id_prfl_une=request.form["id_prfl_une"]
+        lb_mrca_scrsl_dfcto=request.form["mrca_scrsl_dfcto"]
+        lb_estdo=request.form["estdo"]
+        lb_cntrl_cmprbnte=request.form["cntrl_cmprbnte"]
+        lb_cntrl_cja_mnr=request.form["cntrl_cja_mnr"]            
+        lb_cntrl_atrzcn=request.form["cntrl_atrzcn"]
+        lb_gdgt_sgmnto_trsldo=request.form["gdgt_sgmnto_trsldo"]
+        ln_mnto_rmblso_pac=request.form["mnto_rmblso_pac"]
+        ln_id_frma_pgo_dfcto_une = request.form["id_frma_pgo_dfcto_une"]
+        if ln_id_frma_pgo_dfcto_une == 'null':
+            ln_id_frma_pgo_dfcto_une = ''
+        ln_id_cnl_rcdo_dfcto_une=request.form["id_cnl_rcdo_dfcto_une"]
+        if ln_id_cnl_rcdo_dfcto_une == 'null':
+            ln_id_cnl_rcdo_dfcto_une = ''           
+        
+        arrayValues['id_prfl_une']=ln_id_prfl_une
+        arrayValues['mrca_scrsl_dfcto']=lb_mrca_scrsl_dfcto
+        arrayValues['estdo']= lb_estdo
+        arrayValues['cntrl_cmprbnte']=lb_cntrl_cmprbnte
+        arrayValues['cntrl_cja_mnr']=lb_cntrl_cja_mnr
+        arrayValues['id_frma_pgo_dfcto_une']=ln_id_frma_pgo_dfcto_une
+        arrayValues['id_cnl_rcdo_dfcto_une']=ln_id_cnl_rcdo_dfcto_une
+        arrayValues['cntrl_atrzcn']=lb_cntrl_atrzcn
+        arrayValues['gdgt_sgmnto_trsldo']=lb_gdgt_sgmnto_trsldo
+        arrayValues['mnto_rmblso_pac']=ln_mnto_rmblso_pac
+        arrayValues['id_lgn_mdfccn_ge']=str(datosUsuario['id_lgn_ge'])
+        arrayValues['fcha_mdfccn']=str(fecha_act)
+           
+        Cursor =  lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tblogins_perfiles_sucursales'), arrayValues,'id='+str(ln_id))
+        
+        if Cursor :
+            return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400)
+
+    def crear_perfiles_sucursales(self):
+       
+        lob_rspsta = Datos_perfiles_sucursales(request.form)
+        if not lob_rspsta.validate():
+            return Utils.nice_json({labels.lbl_stts_error:lob_rspsta.errors},400)
+        
+        key = request.headers['Authorization']
+        validacionSeguridad = ValidacionSeguridad()
+        token = validacionSeguridad.ValidacionToken(key)
+        datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]
+        arrayValues={}
+                  
+        ln_id=request.form["id"]
+        ln_id_prfl_une=request.form["id_prfl_une"]
+        lb_mrca_scrsl_dfcto=request.form["mrca_scrsl_dfcto"]
+        lb_estdo=request.form["estdo"]
+        lb_cntrl_cmprbnte=request.form["cntrl_cmprbnte"]
+        lb_cntrl_cja_mnr=request.form["cntrl_cja_mnr"]            
+        lb_cntrl_atrzcn=request.form["cntrl_atrzcn"]
+        lb_gdgt_sgmnto_trsldo=request.form["gdgt_sgmnto_trsldo"]
+        ln_mnto_rmblso_pac=request.form["mnto_rmblso_pac"]
+        ln_id_frma_pgo_dfcto_une = request.form["id_frma_pgo_dfcto_une"]
+        if ln_id_frma_pgo_dfcto_une == 'null':
+            ln_id_frma_pgo_dfcto_une = Null
+        ln_id_cnl_rcdo_dfcto_une=request.form["id_cnl_rcdo_dfcto_une"]
+        if ln_id_cnl_rcdo_dfcto_une == 'null':
+            ln_id_cnl_rcdo_dfcto_une = Null
+           
+        
+        arrayValues['id_prfl_une']=ln_id_prfl_une
+        arrayValues['mrca_scrsl_dfcto']=lb_mrca_scrsl_dfcto
+        arrayValues['estdo']= lb_estdo
+        arrayValues['cntrl_cmprbnte']=lb_cntrl_cmprbnte
+        arrayValues['cntrl_cja_mnr']=lb_cntrl_cja_mnr
+        arrayValues['id_frma_pgo_dfcto_une']=ln_id_frma_pgo_dfcto_une
+        arrayValues['id_cnl_rcdo_dfcto_une']=ln_id_cnl_rcdo_dfcto_une
+        arrayValues['cntrl_atrzcn']=lb_cntrl_atrzcn
+        arrayValues['gdgt_sgmnto_trsldo']=lb_gdgt_sgmnto_trsldo
+        arrayValues['mnto_rmblso_pac']=ln_mnto_rmblso_pac
+        arrayValues['id_lgn_mdfccn_ge']=str(datosUsuario['id_lgn_ge'])
+        arrayValues['fcha_mdfccn']=str(fecha_act)
+                 
+        Cursor =  lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tblogins_perfiles_sucursales'), arrayValues,'id='+str(ln_id))
+        
+        if Cursor :
+            return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400) 
