@@ -11,7 +11,7 @@ from Users import Usuarios # @UnresolvedImport
 from preguntas import Preguntas# @UnresolvedImport
 from menu import Menu# @UnresolvedImport
 from contratos import Contratos# @UnresolvedImport
-
+from administraciontablasmaestras import AdministracionTablasMaestras# @UnresolvedImport
 
 
 
@@ -33,7 +33,7 @@ api.add_resource(Preguntas,'/preguntasSg/<page>')
 api.add_resource(Usuarios,'/users/<page>')
 api.add_resource(Menu,'/menu/<page>')
 api.add_resource(Contratos,'/Contratos/<page>')
-
+api.add_resource(AdministracionTablasMaestras,'/AdministracionTablasMaestras/<page>')
 
 if __name__ == '__main__':
     app.register_blueprint(auth)

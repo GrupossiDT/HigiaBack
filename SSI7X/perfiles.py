@@ -47,6 +47,9 @@ class Perfiles(Resource):
             return self.gestionPermisos()
         if kwargs['page']=='perfiles_sucursales':
             return self.perfiles_sucursales()
+        if kwargs['page']=='actualizar_perfiles_sucursales':
+            return self.actualizar_perfiles_sucursales()
+
 
     def crear(self):
         lob_rspsta = DatosPerfil(request.form)
@@ -126,7 +129,7 @@ class Perfiles(Resource):
                                     " b.id_undd_ngco = "+str(ln_id_undd_ngco) +" "+ lc_dta +""\
                                     " order by a.dscrpcn"
             Cursor = lc_cnctn.queryFree(strSql)
-            
+
             if Cursor :
                 data = json.loads(json.dumps(Cursor, indent=2))
                 return Utils.nice_json(data,200)
@@ -422,12 +425,12 @@ class Perfiles(Resource):
     def perfiles_sucursales(self):
 
         ln_id_lgn_ge = request.form["id_lgn_ge"]
-        
+
         strSql ="select lgn_prfl_scrsl.id  as lgn_prfl_scrsl,"\
         "prfl.cdgo as cdgo_prfl,prfl.dscrpcn as dscrpcn_prfl,"\
         "lgn_prfl_scrsl.id_prfl_une as id_prfl_une,"\
-        "lgn_prfl_scrsl.estdo as estdo,"\
-        "lgn_prfl_scrsl.mrca_scrsl_dfcto as mrca_scrsl_dfcto, "\
+        "case when lgn_prfl_scrsl.estdo = true then 'ACTIVO' else 'INACTIVO' end as estdo, "\
+        "case when lgn_prfl_scrsl.mrca_scrsl_dfcto = true then 'ACTIVO' else 'INACTIVO' end as mrca_scrsl_dfcto, "\
         "scrsls.nmbre_scrsl as nmbre_scrsl, "\
         "lgn_prfl_scrsl.id_scrsl as id_scrsl, "\
         "lgn_prfl_scrsl.id_lgn_ge as id_lgn_ge, "\
@@ -435,7 +438,15 @@ class Perfiles(Resource):
         "lgn_prfl_scrsl.id_lgn_mdfccn_ge as id_lgn_mdfccn_ge, "\
         "lgn_prfl_scrsl.fcha_crcn::text as fcha_crcn, "\
         "lgn_prfl_scrsl.fcha_mdfccn::text as fcha_mdfccn, "\
-        "undds_ngcio.nmbre_rzn_scl as undds_ngcio "\
+        "undds_ngcio.nmbre_rzn_scl as undds_ngcio, "\
+        "undds_ngcio.id as id_undds_ngcio, "\
+        "lgn_prfl_scrsl.id_frma_pgo_dfcto_une as id_frma_pgo_dfcto_une, "\
+        "lgn_prfl_scrsl.id_cnl_rcdo_dfcto_une as id_cnl_rcdo_dfcto_une, "\
+        "case when lgn_prfl_scrsl.cntrl_cmprbnte = true then 'ACTIVO' else 'INACTIVO' end as cntrl_cmprbnte, "\
+        "case when lgn_prfl_scrsl.cntrl_cja_mnr = true then 'ACTIVO' else 'INACTIVO' end as cntrl_cja_mnr, "\
+        "case when lgn_prfl_scrsl.cntrl_atrzcn = true then 'ACTIVO' else 'INACTIVO' end as cntrl_atrzcn, "\
+        "lgn_prfl_scrsl.mnto_rmblso_pac::text as mnto_rmblso_pac, "\
+        "case when lgn_prfl_scrsl.gdgt_sgmnto_trsldo = true then 'ACTIVO' else 'INACTIVO' end as gdgt_sgmnto_trsldo "\
         "from "\
         " "+str(dbConf.DB_SHMA)+".tblogins_perfiles_sucursales as lgn_prfl_scrsl    inner join "\
         " "+str(dbConf.DB_SHMA)+".tbperfiles_une as prfl_une "\
@@ -448,7 +459,7 @@ class Perfiles(Resource):
         "on undds_ngcio.id = scrsls.id_undd_ngco  "\
         "where lgn_prfl_scrsl.id_lgn_ge = "+str(ln_id_lgn_ge)+""\
          " order by prfl.dscrpcn "
-                                            
+
         Cursor = lc_cnctn.queryFree(strSql)
         print(type(Cursor) )
         if Cursor :
@@ -456,3 +467,52 @@ class Perfiles(Resource):
             return Utils.nice_json(data,200)
         else:
             return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
+
+    def actualizar_perfiles_sucursales(self):
+
+        lob_rspsta = DatosUpdate(request.form)
+        if not lob_rspsta.validate():
+            return self.Utils.nice_json({labels.lbl_stts_error:lob_rspsta.errors},400)
+
+        key = request.headers['Authorization']
+        validacionSeguridad = ValidacionSeguridad()
+        token = validacionSeguridad.ValidacionToken(key)
+        datosUsuario = validacionSeguridad.ObtenerDatosUsuario(token['lgn'])[0]
+
+        ln_id=request.form["id"]
+        ln_id_scrsl=request.form["id_scrsl"]
+        ln_id_prfl_une=request.form["id_prfl_une"]
+        lb_mrca_scrsl_dfcto=request.form["mrca_scrsl_dfcto"]
+        lb_estdo=request.form["estdo"]
+        lb_cntrl_cmprbnte=request.form["cntrl_cmprbnte"]
+        lb_cntrl_cja_mnr=request.form["cntrl_cja_mnr"]
+        ln_id_frma_pgo_dfcto_une=request.form["id_frma_pgo_dfcto_une"]
+        ln_id_cnl_rcdo_dfcto_une=request.form["id_cnl_rcdo_dfcto_une"]
+        lb_cntrl_atrzcn=request.form["cntrl_atrzcn"]
+        lb_gdgt_sgmnto_trsldo=request.form["gdgt_sgmnto_trsldo"]
+        ln_mnto_rmblso_pac=request.form["mnto_rmblso_pac"]
+
+        arrayValues={}
+
+        arrayValues['id_scrsl']=ln_id_scrsl
+        arrayValues['id_prfl_une']=ln_id_prfl_une
+        arrayValues['mrca_scrsl_dfcto']=lb_mrca_scrsl_dfcto
+        arrayValues['estdo']= lb_estdo
+        arrayValues['cntrl_cmprbnte']=lb_cntrl_cmprbnte
+        arrayValues['cntrl_cja_mnr']=lb_cntrl_cja_mnr
+        arrayValues['id_frma_pgo_dfcto_une']=ln_id_frma_pgo_dfcto_une
+        arrayValues['id_cnl_rcdo_dfcto_une']=ln_id_cnl_rcdo_dfcto_une
+        arrayValues['cntrl_atrzcn']=lb_cntrl_atrzcn
+        arrayValues['gdgt_sgmnto_trsldo']=lb_gdgt_sgmnto_trsldo
+        arrayValues['mnto_rmblso_pac']=ln_mnto_rmblso_pac
+        arrayValues['id_lgn_mdfccn_ge']=str(datosUsuario['id_lgn_ge'])
+        arrayValues['fcha_mdfccn']=str(fecha_act)
+
+        Cursor =  lc_cnctn.queryUpdate(dbConf.DB_SHMA+"."+str('tbperfiles_une'), arrayValues,'id='+str(ln_id))
+        if Cursor :
+            return Utils.nice_json({labels.lbl_stts_success:labels.SCCSS_ACTLZCN_EXTSA},200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_PRBLMS_GRDR},400)
+
+    '''
+    '''
