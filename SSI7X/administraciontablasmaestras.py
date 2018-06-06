@@ -4,18 +4,21 @@ Created on 02/05/2018
 @author: EDISON.BEJARANO
 '''
 
-from Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from Static.Utils import Utils  # @UnresolvedImport
+import datetime
+import time, json, jwt
+
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField , IntegerField
-from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
-import Static.labels as labels # @UnresolvedImport
-import Static.errors as errors  # @UnresolvedImport
-import Static.opciones_higia as optns  # @UnresolvedImport
-import Static.config_DB as dbConf # @UnresolvedImport
+
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
 import Static.config as conf  # @UnresolvedImport
-import time,json,jwt
-import datetime
+import Static.config_DB as dbConf  # @UnresolvedImport
+import Static.errors as errors  # @UnresolvedImport
+import Static.labels as labels  # @UnresolvedImport
+import Static.opciones_higia as optns  # @UnresolvedImport
+from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
+
 
 #Declaracion de variables globales
 Utils = Utils()
@@ -39,6 +42,10 @@ class AdministracionTablasMaestras(Resource):
             return self.Municipios()
         if kwargs['page']=='Barrios':
             return self.Barrios()
+        if kwargs['page']=='FormasPago':
+            return self.FormasPago() 
+        if kwargs['page']=='CanalRecaudo':
+            return self.CanalRecaudo() 
             
     def UnidadesNegocio(self):
         ln_id_grpo_emprsrl = request.form["id_grpo_emprsrl"]
@@ -176,4 +183,41 @@ class AdministracionTablasMaestras(Resource):
         else:
             return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
         
+    def FormasPago(self):
+        ln_id_undd_ngco = request.form["id_undd_ngco"]
+        
+        strSql = " select frms_pgo_une.id,trim(frms_pgo.dscrpcn) as dscrpcn "\
+                 " from "\
+                 " "+str(dbConf.DB_SHMA)+".tbformas_pago_une as frms_pgo_une  "\
+                 " Inner Join "+str(dbConf.DB_SHMA)+".tbformas_pago as frms_pgo "\
+                 " on frms_pgo_une.id_frma_pgo = frms_pgo.id "\
+                 " where frms_pgo_une.id_undd_ngco =  "+str(ln_id_undd_ngco)+""\
+                 " and frms_pgo_une.estdo = true and frms_pgo.estdo = true "\
+                 " order by trim(frms_pgo.dscrpcn)"
+                                           
+        Cursor = lc_cnctn.queryFree(strSql)
+        if Cursor :
+            data = json.loads(json.dumps(Cursor, indent=2))
+            return Utils.nice_json(data,200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
 
+    def CanalRecaudo(self):
+        ln_id_undd_ngco = request.form["id_undd_ngco"]
+        
+        strSql = " select cnls_rcdo_une.id,trim(cnls_rcdo.dscrpcn) as dscrpcn "\
+                 " from "\
+                 " "+str(dbConf.DB_SHMA)+".tbcanales_recaudo_une as cnls_rcdo_une  "\
+                 " Inner Join "+str(dbConf.DB_SHMA)+".tbcanales_recaudo as cnls_rcdo"\
+                 " on cnls_rcdo_une.id_cnl_rcdo = cnls_rcdo.id "\
+                 " where cnls_rcdo_une.id_undd_ngco = "+str(ln_id_undd_ngco)+""\
+                 " and cnls_rcdo.estdo = true and cnls_rcdo_une.estdo = true "\
+                 "order by trim(cnls_rcdo.dscrpcn)"                 
+                                           
+        Cursor = lc_cnctn.queryFree(strSql)
+        if Cursor :
+            data = json.loads(json.dumps(Cursor, indent=2))
+            return Utils.nice_json(data,200)
+        else:
+            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
+    
