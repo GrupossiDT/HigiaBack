@@ -4,18 +4,21 @@ Created on 02/05/2018
 @author: EDISON.BEJARANO
 '''
 
-from Static.ConnectDB import ConnectDB  # @UnresolvedImport
-from Static.Utils import Utils  # @UnresolvedImport
+import datetime
+import time, json, jwt
+
 from flask_restful import request, Resource
 from wtforms import Form, validators, StringField , IntegerField
-from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
-import Static.labels as labels # @UnresolvedImport
-import Static.errors as errors  # @UnresolvedImport
-import Static.opciones_higia as optns  # @UnresolvedImport
-import Static.config_DB as dbConf # @UnresolvedImport
+
+from Static.ConnectDB import ConnectDB  # @UnresolvedImport
+from Static.Utils import Utils  # @UnresolvedImport
 import Static.config as conf  # @UnresolvedImport
-import time,json,jwt
-import datetime
+import Static.config_DB as dbConf  # @UnresolvedImport
+import Static.errors as errors  # @UnresolvedImport
+import Static.labels as labels  # @UnresolvedImport
+import Static.opciones_higia as optns  # @UnresolvedImport
+from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
+
 
 #Declaracion de variables globales
 Utils = Utils()

@@ -4,22 +4,24 @@ Created on 23/01/2018
 @author: EDISON.BEJARANO
 '''
 
+import datetime
+import time
+import json
+from flask_restful import request
+from flask_restful import Resource
+from pyasn1.type.univ import Null
+from wtforms import Form
+from wtforms import validators
+from wtforms import StringField
+from wtforms import IntegerField
 from Static.ConnectDB import ConnectDB  # @UnresolvedImport
 from Static.Utils import Utils  # @UnresolvedImport
-from flask_restful import request, Resource
-from wtforms import Form, validators, StringField , IntegerField
-from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
-import Static.labels as labels # @UnresolvedImport
+import Static.config_DB as dbConf  # @UnresolvedImport
 import Static.errors as errors  # @UnresolvedImport
+import Static.labels as labels  # @UnresolvedImport
 import Static.opciones_higia as optns  # @UnresolvedImport
-import Static.config_DB as dbConf # @UnresolvedImport
-import Static.config as conf  # @UnresolvedImport
-import time,json,jwt
-import datetime
-from psycopg2.sql import NULL
-from lib2to3.fixer_util import Number
-from pandas.io import sql
-from pyasn1.type.univ import Null
+from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
+
 
 #Declaracion de variables globales
 Utils = Utils()
