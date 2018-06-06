@@ -21,7 +21,7 @@ from Static.ConnectDB import ConnectDB  # @UnresolvedImport
 from Static.Ldap_connect import Conexion_ldap  # @UnresolvedImport
 from Static.Utils import Utils  # @UnresolvedImport
 import Static.config as conf  # @UnresolvedImport
-import Static.config_DB as dbConf  # @UnresolvedImport 
+import Static.config_DB as dbConf  # @UnresolvedImport
 import Static.errors as errors  # @UnresolvedImport
 import Static.labels as labels  # @UnresolvedImport
 from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
@@ -95,7 +95,7 @@ class AutenticacionUsuarios(Resource):
 
     def login(self):
         ingreso = False
-
+        error = None
         u = UsuarioAcceso(request.form)
 
         if not u.validate():
@@ -108,7 +108,8 @@ class AutenticacionUsuarios(Resource):
                 if type(validacionSeguridad.validaUsuario(request.form['username'])) is dict:
                     ingreso = True
                 else:
-                    return validacionSeguridad.validaUsuario(request.form['username'])
+                    print("entro en sino")
+                    error =  str(validacionSeguridad.validaUsuario(request.form['username']))
             else:
                 ingreso
         elif IpUsuario.iptype() == 'PRIVATE':
@@ -119,7 +120,6 @@ class AutenticacionUsuarios(Resource):
                     ingreso = True
                 else:
                     error = str(validacionSeguridad.validaUsuario(request.form['username']))
-                    return Utils.nice_json({labels.lbl_stts_error:error}, 400)
             else:
                 ingreso
 
@@ -155,6 +155,9 @@ class AutenticacionUsuarios(Resource):
                 response.headers["Access-Control-Allow-Origin"] = "*"
             return response
         else:
+            #insertar los intentos fallidos.
+            if(error is not None) :
+                return Utils.nice_json({labels.lbl_stts_error:error}, 400)
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_USRO_CNTSN_INVLD}, 400)
 
     def MenuDefectoUsuario(self):
