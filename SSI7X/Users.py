@@ -959,3 +959,26 @@ class Usuarios(Resource):
 
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_ATRZCN},400)
+
+    '''
+        @author:Robin Valencia
+        @since:06/06/2018
+        @summary:Metodo verifica si la una contraseña se encuentra en registrada en los ultimos N cambios.
+        @param: Self, id_lgn_ge, nva_cntrsna, lmte_hstrco <optional> sino se envia se tomara por defecto el de configuracion.
+        @return:bool true cuando la contrasena hace match ó false sino hace match
+    '''
+
+    def validaHistorialContrasena(self, ln_id_lgn_ge,lc_nva_cntrsna,ld_lmte_hstrco=None):
+
+        if ld_lmte_hstrco is None:
+            ld_lmte_hstrco = conf.LMTE_HSTRCO_CNTRSNA
+
+        lc_query="select (count(1) >0) as existe  from (select cntrsna from "\
+                " " + dbConf.DB_SHMA + ".tbhistorial_claves where id_lgn_ge = "+ str(ln_id_lgn_ge) +" "\
+                "order by fcha_crcn desc limit " + str(ld_lmte_hstrco) + ") as hstrco "\
+                "where hstrco.cntrsna = '" + lc_nva_cntrsna +"'"
+        Cursor = lc_cnctn.queryFree(lc_query)
+        if Cursor :
+            return Cursor[0]["existe"]
+
+        return False

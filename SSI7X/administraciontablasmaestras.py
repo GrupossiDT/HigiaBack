@@ -28,7 +28,7 @@ lc_cnctn = ConnectDB()
 fecha_act = time.ctime()
 
 class AdministracionTablasMaestras(Resource):
-    
+
     def post(self,**kwargs):
         if kwargs['page']=='UnidadesNegocio':
             return self.UnidadesNegocio()
@@ -48,10 +48,10 @@ class AdministracionTablasMaestras(Resource):
             return self.FormasPago() 
         if kwargs['page']=='CanalRecaudo':
             return self.CanalRecaudo() 
-            
+
     def UnidadesNegocio(self):
         ln_id_grpo_emprsrl = request.form["id_grpo_emprsrl"]
-        
+
         strSql = " select id as id,nmbre_rzn_scl as dscrpcn"\
                  " from "\
                  " "+str(dbConf.DB_SHMA)+".tbunidades_negocio "\
@@ -59,14 +59,14 @@ class AdministracionTablasMaestras(Resource):
                  " id_grpo_emprsrl = "+str(ln_id_grpo_emprsrl)+""\
                  " and estdo = true "\
                  " order by nmbre_rzn_scl"
-                                           
+
         Cursor = lc_cnctn.queryFree(strSql)
         if Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data,200)
         else:
             return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
-    
+
     def Sucursales(self):
         ln_id_undd_ngco = request.form["id_undd_ngco"]
         strSql = " select id as id,nmbre_scrsl as dscrpcn "\
@@ -76,17 +76,17 @@ class AdministracionTablasMaestras(Resource):
                  " id_undd_ngco = "+str(ln_id_undd_ngco)+""\
                  " and estdo = true "\
                  " order by nmbre_scrsl"
-                                    
+
         Cursor = lc_cnctn.queryFree(strSql)
         if Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data,200)
         else:
-            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)        
-    
+            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
+
     def Perfiles(self):
         ln_id_undd_ngco = request.form["id_undd_ngco"]
-        
+
         strSql = " select a.id as id, trim(b.dscrpcn) as dscrpcn "\
                  " from "\
                  " "+str(dbConf.DB_SHMA)+".tbperfiles_une as a "\
@@ -96,17 +96,17 @@ class AdministracionTablasMaestras(Resource):
                  " a.id_undd_ngco = "+str(ln_id_undd_ngco)+""\
                  " and a.estdo= true and b.estdo= true "\
                  " order by trim(b.dscrpcn)"
-                                
+
         Cursor = lc_cnctn.queryFree(strSql)
         if Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data,200)
         else:
-            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)        
-    
+            return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
+
     def Genero(self):
         ln_id_grpo_emprsrl = request.form["id_grpo_emprsrl"]
-        
+
         strSql = " select a.id , trim(b.dscrpcn) as dscrpcn "\
                  " from "\
                  " "+str(dbConf.DB_SHMA)+".tbsexos_ge as a "\
@@ -116,18 +116,18 @@ class AdministracionTablasMaestras(Resource):
                  " a.id_grpo_emprsrl = "+str(ln_id_grpo_emprsrl)+""\
                  " and a.estdo= true and b.estdo= true "\
                  " order by trim(b.dscrpcn)"
-                                           
+
         Cursor = lc_cnctn.queryFree(strSql)
         if Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data,200)
         else:
             return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
-    
-         
+
+
     def Departamento(self):
         ln_id_ps_ge = request.form["id_ps_ge"]
-        
+
         strSql = " select a.id,trim(b.dscrpcn) as dscrpcn "\
                  " from "\
                  " "+str(dbConf.DB_SHMA)+".tbdepartamentos_ge as a "\
@@ -137,17 +137,17 @@ class AdministracionTablasMaestras(Resource):
                  " a.id_ps_ge = "+str(ln_id_ps_ge)+""\
                  " and a.estdo= true and b.estdo= true "\
                  " order by trim(b.dscrpcn)"
-                                           
+
         Cursor = lc_cnctn.queryFree(strSql)
         if Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data,200)
         else:
             return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
-         
+
     def Municipios(self):
         ln_id_dprtmnto_ge = request.form["id_dprtmnto_ge"]
-        
+
         strSql = " select a.id,trim(b.dscrpcn) as dscrpcn "\
                  " from "\
                  " "+str(dbConf.DB_SHMA)+".tbmunicipios_ge as a "\
@@ -157,17 +157,17 @@ class AdministracionTablasMaestras(Resource):
                  " a.id_dprtmnto_ge = "+str(ln_id_dprtmnto_ge)+""\
                  " and a.estdo= true and b.estdo= true "\
                  " order by trim(b.dscrpcn)"
-                                           
+
         Cursor = lc_cnctn.queryFree(strSql)
         if Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data,200)
         else:
             return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
-    
+
     def Barrios(self):
         ln_id_mncpo_ge = request.form["id_mncpo_ge"]
-        
+
         strSql = " select a.id,trim(b.dscrpcn) as dscrpcn "\
                  " from "\
                  " "+str(dbConf.DB_SHMA)+".tbbarrios_ge as a "\
@@ -177,7 +177,7 @@ class AdministracionTablasMaestras(Resource):
                  " a.id_mncpo_ge = "+str(ln_id_mncpo_ge)+""\
                  " and a.estdo= true and b.estdo= true "\
                  " order by trim(b.dscrpcn)"
-                                           
+
         Cursor = lc_cnctn.queryFree(strSql)
         if Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
@@ -222,4 +222,4 @@ class AdministracionTablasMaestras(Resource):
             return Utils.nice_json(data,200)
         else:
             return Utils.nice_json({labels.lbl_stts_success:labels.INFO_NO_DTS},200)
-    
+   
