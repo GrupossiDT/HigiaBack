@@ -5,10 +5,12 @@ Created on 02/05/2018
 '''
 
 import datetime
-import time, json, jwt
+import time
+import json
+import jwt
 
 from flask_restful import request, Resource
-from wtforms import Form, validators, StringField , IntegerField
+from wtforms import Form, validators, StringField, IntegerField
 
 from Static.ConnectDB import ConnectDB  # @UnresolvedImport
 from Static.Utils import Utils  # @UnresolvedImport

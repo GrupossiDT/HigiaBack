@@ -41,3 +41,4 @@ ERR_NO_CLVE_TMP = "Clave Temporal no se Encuentra en el sistema o Expiró intén
 ERR_NO_CNCD_CNTSNA = "Las Contraseñas no Coinciden"
 ERR_NO_PTRN_CLVE = "La contraseña debe tener al entre 8 y 40 caracteres, al menos un dígito, al menos una minúscula y al menos una mayúscula."
 ERR_NO_CNTRSNA_INVLDA = "La contraseña actual es invalida"
+ERR_NO_DTOS = "Error sin datos"

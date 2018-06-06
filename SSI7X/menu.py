@@ -125,11 +125,19 @@ class Menu(Resource):
                         arrayValues['id_mnu'] = str(0)
                     else:
                         arrayValues['id_mnu'] = request.form["ln_parent"]
+                        
                     arrayValues['ordn'] = request.form["lc_ordn"]
                     arrayValues['dscrpcn'] = request.form["lc_dscrpcn"]
                     arrayValues['lnk'] = request.form["lc_lnk"]
                     arrayValues['id_lgn_crcn_ge'] = str(datosUsuario['id_lgn_ge'])
                     arrayValues['id_lgn_mdfccn_ge'] = str(datosUsuario['id_lgn_ge'])
+                    
+                    # validacion para evitar registros duplicados, se verifica que el codigo y la descripcion no existan en otros registros
+                    Cursor1 = Pconnection.querySelect(dbConf.DB_SHMA +'.tbmenu', 'dscrpcn', "dscrpcn='"+str(arrayValues['dscrpcn'])+"'")
+                    
+                    if Cursor1 :
+                        return Utils.nice_json({labels.lbl_stts_error:labels.lbl_cdgo_prfl+" "+errors.ERR_RGSTRO_RPTDO},400)
+                    
                     ln_id_mnu =  self.crearMenu(arrayValues,'tbmenu')
                     if ln_id_mnu:
                         arrayValuesDetalle={}
@@ -256,6 +264,7 @@ class Menu(Resource):
                                 " where "\
                                 " b.estdo = true and id_grpo_emprsrl = "+ln_id_grpo_emprsrl+" "\
                                 + str(lc_prmtrs)
+            print(StrSql)                   
             Cursor = Pconnection.queryFree(StrSql)
             if  Cursor :
                 data = json.loads(json.dumps(Cursor, indent=2))
