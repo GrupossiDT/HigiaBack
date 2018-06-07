@@ -17,3 +17,5 @@ URL_WS_SMS = "https://www.portalsms.co/wsSMS/wsEnviosSMS.php?wsdl"
 LGN_USRO_WS_SMS = "alo.ssalud"
 CNTRSNA_USRO_WS_SMS = "12345678"
 LMTE_HSTRCO_CNTRSNA = 30
+MNTS_ENTRE_INTNTS = 10
+ACCSO_CNTDD_INTNTS = 3
