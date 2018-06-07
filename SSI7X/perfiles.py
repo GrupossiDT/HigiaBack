@@ -460,11 +460,7 @@ class Perfiles(Resource):
         "undds_ngcio.id as id_undds_ngcio, "\
         "lgn_prfl_scrsl.id_frma_pgo_dfcto_une as id_frma_pgo_dfcto_une, "\
         "lgn_prfl_scrsl.id_cnl_rcdo_dfcto_une as id_cnl_rcdo_dfcto_une, "\
-        "lgn_prfl_scrsl.cntrl_cmprbnte as cntrl_cmprbnte, "\
-        "lgn_prfl_scrsl.cntrl_cja_mnr as cntrl_cja_mnr, "\
-        "lgn_prfl_scrsl.cntrl_atrzcn as cntrl_atrzcn, "\
-        "lgn_prfl_scrsl.mnto_rmblso_pac::text as mnto_rmblso_pac, "\
-        "lgn_prfl_scrsl.gdgt_sgmnto_trsldo as gdgt_sgmnto_trsldo,lgns.nmbre_usro "\
+        "lgn_prfl_scrsl.gdgt_sgmnto_trsldo as gdgt_sgmnto_trsldo,lgns.nmbre_usro, "\
         "case when lgn_prfl_scrsl.cntrl_cmprbnte = true then 'ACTIVO' else 'INACTIVO' end as cntrl_cmprbnte, "\
         "case when lgn_prfl_scrsl.cntrl_cja_mnr = true then 'ACTIVO' else 'INACTIVO' end as cntrl_cja_mnr, "\
         "case when lgn_prfl_scrsl.cntrl_atrzcn = true then 'ACTIVO' else 'INACTIVO' end as cntrl_atrzcn, "\

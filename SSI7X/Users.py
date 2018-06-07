@@ -14,8 +14,8 @@ import time,hashlib,json, random #@UnresolvedImport
 from ValidacionSeguridad import ValidacionSeguridad # @UnresolvedImport
 import Static.config_DB as dbConf # @UnresolvedImport
 from Static.UploadFiles import UploadFiles  # @UnresolvedImport
-from descarga import Descarga
-from mail import correo
+from descarga import Descarga  # @UnresolvedImport
+from mail import correo  # @UnresolvedImport
 from IPy import IP
 import socket
 import re
@@ -61,7 +61,6 @@ class Usuarios(Resource):
             return self.actualizarContrasena()
         elif kwargs['page'] == 'actualizarContrenaInterna':
             return self.actualizarContrenaInterna()
-<<<<<<< HEAD
         elif kwargs['page'] == 'descarga_csv':
             return self.Descarga_csv()
         elif kwargs['page'] == 'descarga_txt':
@@ -70,13 +69,11 @@ class Usuarios(Resource):
             return self.Descarga_xlsx()
         elif kwargs['page'] == 'descarga_pdf':
             return self.Descarga_pdf()
-
-=======
         elif kwargs['page'] == 'preguntasSeguridad':
             return self.preguntasSeguridad()
         elif kwargs['page'] == 'reponderPreguntasSeguridad':
             return self.reponderPreguntasSeguridad()
->>>>>>> refs/remotes/origin/cristian.botina
+
 
 
     '''

@@ -26,9 +26,12 @@ import Static.errors as errors  # @UnresolvedImport
 import Static.labels as labels  # @UnresolvedImport
 from ValidacionSeguridad import ValidacionSeguridad  # @UnresolvedImport
 
+import time
+
 lc_cnctn = ConnectDB()
 Utils = Utils()
 validacionSeguridad = ValidacionSeguridad()
+fecha_act = time.ctime()
 
 '''
     @since: 28-02-2018
@@ -108,7 +111,6 @@ class AutenticacionUsuarios(Resource):
                 if type(validacionSeguridad.validaUsuario(request.form['username'])) is dict:
                     ingreso = True
                 else:
-                    print("entro en sino")
                     error =  str(validacionSeguridad.validaUsuario(request.form['username']))
             else:
                 ingreso
@@ -123,13 +125,14 @@ class AutenticacionUsuarios(Resource):
             else:
                 ingreso
 
+
+        tmpData = validacionSeguridad.ObtenerDatosUsuario(request.form['username'])[0]
+        tmpData["id_scrsl"] = validacionSeguridad.validaUsuario(request.form['username'])["id_scrsl"]
+        data = json.loads(json.dumps(tmpData, indent=2))
+
+        _cookie_data = json.dumps(tmpData, sort_keys=True, indent=4)
+        device = Utils.DetectarDispositivo(request.headers.get('User-Agent'))
         if  ingreso:
-
-            tmpData = validacionSeguridad.ObtenerDatosUsuario(request.form['username'])[0]
-            tmpData["id_scrsl"] = validacionSeguridad.validaUsuario(request.form['username'])["id_scrsl"]
-            data = json.loads(json.dumps(tmpData, indent=2))
-
-            _cookie_data = json.dumps(tmpData, sort_keys=True, indent=4)
 
             #Creacion del key almacenar basado en el id_lgn_ge + random
 
@@ -139,7 +142,7 @@ class AutenticacionUsuarios(Resource):
             token = jwt.encode(data, conf.SS_TKN_SCRET_KEY+str(key), algorithm=conf.ENCRYPT_ALGORITHM).decode('utf-8')
 
             arrayValues = {}
-            device = Utils.DetectarDispositivo(request.headers.get('User-Agent'))
+
             arrayValues['key'] = key
             arrayValues['token'] = str(token)
             arrayValues['ip'] = str(IpUsuario)
@@ -155,9 +158,16 @@ class AutenticacionUsuarios(Resource):
                 response.headers["Access-Control-Allow-Origin"] = "*"
             return response
         else:
+
             #insertar los intentos fallidos.
+            self.insertaIntentoAcceso(IpUsuario,str(data['id_lgn_ge']),str(device),request.form['password'])
+
+            #gestiona si debe deshabilitar el login
+            self.autoDisableLogin(str(data['id_lgn_ge']))
+
             if(error is not None) :
                 return Utils.nice_json({labels.lbl_stts_error:error}, 400)
+
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_USRO_CNTSN_INVLD}, 400)
 
     def MenuDefectoUsuario(self):
@@ -246,7 +256,7 @@ class AutenticacionUsuarios(Resource):
                 else:
                     return Utils.nice_json({"fto_usro":"null"}, 200)
             else:
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_TNE_PRFL, lc_prtcl.scheme + '://' + "fto_usro":conf.SV_HOST + ':' + str(conf.SV_PORT) + '/static/img/' + data['fto_usro']}, 200)
+                return Utils.nice_json({"error":errors.ERR_NO_USRO_INCTVO,"fto_usro":lc_prtcl.scheme + '://' + conf.SV_HOST + ':' + str(conf.SV_PORT) + '/static/img/' + data['fto_usro']}, 200)
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_TNE_PRMTDO_ACCDR}, 400)
 
@@ -282,3 +292,49 @@ class AutenticacionUsuarios(Resource):
                 return Utils.nice_json({labels.lbl_stts_success:"BYE"}, 200)
             else:
                 return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_LOGOUT} , 400)
+    '''
+        @author: Robin
+        @since: 07-01-2018
+        @summary: Metodo para insertar intentos de acceso:
+        @param : recibe ip, id_lgn_ge, dspstvo_accso, cntrsna
+        @return: bool.
+    '''
+    def insertaIntentoAcceso(self, lc_ip, ld_id_lgn_ge, lc_dspstvo_accso, cntrsna):
+        arrayValues = {}
+        arrayValues['ip'] = str(lc_ip)
+        arrayValues['dspstvo_accso'] = str(lc_dspstvo_accso)
+        arrayValues['id_lgn_ge'] = str(ld_id_lgn_ge)
+        arrayValues['fcha_crcn'] = str(fecha_act)
+        arrayValues['cntrsna'] = str(cntrsna)
+        return lc_cnctn.queryInsert( dbConf.DB_SHMA+".tbintentos_accesos", arrayValues, "id" ) > 0
+
+
+    '''
+        @author: Robin
+        @since: 07-01-2018
+        @summary: Metodo para deshabilitar el login del usuario si supero la  cantidad de intentos
+        @param : id_lgn_ge, ld_mnts <optional>
+        @return: bool: si lo desahabilita = true .
+    '''
+
+    def autoDisableLogin(self, ld_id_lgn_ge,ld_mnts=None):
+        if ld_mnts is None:
+            ld_mnts = conf.MNTS_ENTRE_INTNTS
+
+        lc_query = "select  count(1) as intentos from "+dbConf.DB_SHMA+".tbintentos_accesos "\
+                  "where id_lgn_ge="+str(ld_id_lgn_ge) +" and fcha_crcn >= (now() - interval '"+ str(ld_mnts) +" minutes' )"
+
+        ld_result = lc_cnctn.queryFree(lc_query)[0]["intentos"]
+
+        #desahabilita el login para el usuario.
+        if ld_result >= conf.ACCSO_CNTDD_INTNTS:
+            lc_query = "update ssi7x.tblogins set estdo=false "\
+                        "from ssi7x.tblogins as l "\
+                        "inner join ssi7x.tblogins_ge as lg on lg.id_lgn = l.id "\
+                        "where lg.id=" +str(ld_id_lgn_ge) +" and l.estdo=true"
+            print(lc_query)
+            lc_cnctn.queryUpdateFree(lc_query)
+
+            return True
+        else:
+            return False
