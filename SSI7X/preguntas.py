@@ -151,6 +151,7 @@ class Preguntas(Resource):
 
     def listarMisPreguntas(self):
         ln_opcn_mnu = request.form["id_mnu_ge"]
+        id_lgn_accso_ge = request.form["id_lgn_accso_ge"]
         token = request.headers['Authorization']
         validacionSeguridad = ValidacionSeguridad()
         lb_val = validacionSeguridad.Principal(token, ln_opcn_mnu, optns.OPCNS_MNU['PreguntaSg'])
@@ -159,8 +160,7 @@ class Preguntas(Resource):
         StrSql = " select"\
                     	" a.id,"\
                     	" c.dscrpcn,"\
-                    	" a.rspsta,"\
-                    	" a.estdo,"\
+                    	" case when a.estdo is true then 'ACTIVO' else 'INACTIVO' end as estdo ,"\
                     	" a.id_prgnt_sgrdd_ge"\
                     " from"\
                     	" "+str(dbConf.DB_SHMA)+".tbrespuestas_preguntas_seguridad a"\
@@ -169,14 +169,14 @@ class Preguntas(Resource):
                     " inner join "+str(dbConf.DB_SHMA)+".tbpreguntas_seguridad c on"\
                     	" b.id_prgnta_sgrdd = c.id"\
                     " where"\
-                    	" a.id_lgn_accso_ge = 119; "
+                    	" a.id_lgn_accso_ge ="+id_lgn_accso_ge
         Cursor = Pconnection.queryFree(StrSql)
         if  Cursor :
             data = json.loads(json.dumps(Cursor, indent=2))
             return Utils.nice_json(data, 200)
             ###return Utils.nice_json({labels.lbl_stts_success:"TEST!!"}, 200)
         else:
-            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_RGSTRS}, 400)
+            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_RGSTRS}, 200)
 
     '''
         def listar

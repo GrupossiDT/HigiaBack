@@ -127,7 +127,12 @@ class AutenticacionUsuarios(Resource):
 
 
         tmpData = validacionSeguridad.ObtenerDatosUsuario(request.form['username'])[0]
-        tmpData["id_scrsl"] = validacionSeguridad.validaUsuario(request.form['username'])["id_scrsl"]
+        
+        if type(validacionSeguridad.validaUsuario(request.form['username'])) is int:
+            tmpData["id_scrsl"] =  validacionSeguridad.validaUsuario(request.form['username'])["id_scrsl"]
+        else:
+            return Utils.nice_json({labels.lbl_stts_error:validacionSeguridad.validaUsuario(request.form['username'])}, 400)
+        
         data = json.loads(json.dumps(tmpData, indent=2))
 
         _cookie_data = json.dumps(tmpData, sort_keys=True, indent=4)
@@ -214,12 +219,15 @@ class AutenticacionUsuarios(Resource):
                             'c.dscrpcn as text , a.id_lgn_prfl_scrsl, b.id_mnu as id ,a.id_mnu_ge, c.id_mnu as parentid , c.lnk ,a.id Mid,c.ordn  '\
                             'FROM '+dbConf.DB_SHMA+'.tblogins_perfiles_menu as a  '\
                             'INNER JOIN '+dbConf.DB_SHMA+'.tbmenu_ge b on a.id_mnu_ge=b.id  '\
-                            'INNER JOIN '+dbConf.DB_SHMA+'.tbmenu as c ON b.id_mnu = c.id where a.estdo=true  and b.estdo=true  '\
+                            'INNER JOIN '+dbConf.DB_SHMA+'.tbmenu as c ON b.id_mnu = c.id where a.estdo=true  and b.estdo=true  and c.estdo = true '\
                             'and a.id_lgn_prfl_scrsl = ' + str(id_lgn_prfl_scrsl['id_prfl_scrsl']) + '  ) as a '\
                             'LEFT JOIN '+dbConf.DB_SHMA+'.tbfavoritosmenu as d on d.id_lgn_prfl_mnu = a.Mid  '\
                             'LEFT JOIN '+dbConf.DB_SHMA+'.tblogins_perfiles_sucursales as lps on lps.id = a.id_lgn_prfl_scrsl '\
                             'LEFT JOIN '+dbConf.DB_SHMA+'.tbperfiles_une_menu pum on pum.id_prfl_une = lps.id_prfl_une and pum.id_mnu_ge = a.id_mnu_ge '\
                             'ORDER BY  cast(a.ordn as integer)'
+
+                print(strQuery)
+
 
                 Cursor = lc_cnctn.queryFree(strQuery)
                 if Cursor :
@@ -328,10 +336,8 @@ class AutenticacionUsuarios(Resource):
 
         #desahabilita el login para el usuario.
         if ld_result >= conf.ACCSO_CNTDD_INTNTS:
-            lc_query = "update ssi7x.tblogins set estdo=false "\
-                        "from ssi7x.tblogins as l "\
-                        "inner join ssi7x.tblogins_ge as lg on lg.id_lgn = l.id "\
-                        "where lg.id=" +str(ld_id_lgn_ge) +" and l.estdo=true"
+            lc_query = "update "+dbConf.DB_SHMA+".tblogins_ge set estdo=false "\
+                        "where id=" +str(ld_id_lgn_ge)
             print(lc_query)
             lc_cnctn.queryUpdateFree(lc_query)
 

@@ -170,7 +170,6 @@ class Usuarios(Resource):
             '''
             lc_tbls_query = dbConf.DB_SHMA+".tblogins_ge a INNER JOIN "+dbConf.DB_SHMA+".tblogins b on a.id_lgn=b.id "
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " b.lgn = '"+str(la_clmns_insrtr['lgn'])+"' ")
-            print(lc_tbls_query +"::"+str(la_clmns_insrtr['lgn']))
             if CursorValidar:
                 return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
 
@@ -264,7 +263,7 @@ class Usuarios(Resource):
             lc_tbls_query = dbConf.DB_SHMA+".tblogins_ge a INNER JOIN "+dbConf.DB_SHMA+".tblogins b on a.id_lgn=b.id "
             CursorValidar = lc_cnctn.querySelect(lc_tbls_query, ' b.id ', " a.id <> "+str(la_clmns_actlzr_ge['id'])+" AND b.lgn = '"+str(la_clmns_actlzr['lgn'])+"' ")
             if CursorValidar:
-               return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
+                return Utils.nice_json({labels.lbl_stts_error:labels.lbl_lgn+" "+errors.ERR_RGSTRO_RPTDO},400)
 
             '''
             Insertar en la tabla auxiliar y obtener id de creacion
@@ -410,7 +409,6 @@ class Usuarios(Resource):
                 ln_ttl = 0
 
             if  (ln_ttl<6):
-                print("error, no se han definido las preguntas")
                 return Utils.nice_json({labels.lbl_stts_error:"No se han definido las 6 preguntas de seguridad, comuníquese  con el administrador del sistema."},400)
 
             lc_query_rndm = " select a.id, c.dscrpcn from "+dbConf.DB_SHMA+".tbrespuestas_preguntas_seguridad a "\
@@ -421,13 +419,17 @@ class Usuarios(Resource):
             Cursor2 = lc_cnctn.queryFree(lc_query_rndm)
             if Cursor2 :
                 data2 = json.loads(json.dumps(Cursor2, indent=2))
-
-                    ##return Utils.nice_json({labels.lbl_stts_success:'TODO ESTA OK',"preguntas":data2},200)
                 return Utils.nice_json(data2,200)
-
         else:
             return Utils.nice_json({labels.lbl_stts_error:"La cadena Token no es valida."},400)
 
+    '''
+        @author:Cristian Botina
+        @since:07/07/2018
+        @summary:Metodo para responder las preguntas de seguridad
+        @param: Self
+        @return:Status 200
+    '''
     def reponderPreguntasSeguridad(self):
         lc_token = request.form['token']
         ln_prgnta_0 = request.form['txt_idpr0']
@@ -439,7 +441,6 @@ class Usuarios(Resource):
         lc_rspsta_1 = hashlib.md5(lc_rspsta_1.encode('utf-8')).hexdigest()
         lc_rspsta_2 = request.form['txt_pregunta2']
         lc_rspsta_2 = hashlib.md5(lc_rspsta_2.encode('utf-8')).hexdigest()
-
 
         ## Obtengo el id delusuario de acuerdo al token
         lc_query_clve_tmp = " select id, id_lgn_ge, crreo_slctnte, cntrsna from "+dbConf.DB_SHMA+".tbclaves_tmp where token = '"+lc_token+"' and estdo = true limit 1;"
@@ -453,7 +454,6 @@ class Usuarios(Resource):
         else:
             return Utils.nice_json({labels.lbl_stts_error:"La cadena Token no es valida."},400)
 
-
         ## Validar la cantidad de intentos
         #validamos que no tenga una clave temporal ya generada al menos 3 intentos en 30 min
         lc_query = "select "\
@@ -465,12 +465,10 @@ class Usuarios(Resource):
                      "and estdo = true "\
                      "and crreo_slctnte ='"+lc_crro_slctnte+"'"
         Cursor = lc_cnctn.queryFree(lc_query)
-        print('aqui consulta')
-        print(lc_query)
         if Cursor:
             data_vlda = json.loads(json.dumps(Cursor[0], indent=2))
             if data_vlda['count'] >= 3:
-                return Utils.nice_json({labels.lbl_stts_error:'Ya se encuentra una Clave Generada para el ingreso Revisa tu correo o mensajes de texto intentalo más tarde'},400)
+                return Utils.nice_json({labels.lbl_stts_error:'Se han realizado 3 intentos en los ultimos minutos, intentalo más tarde'},400)
 
 
         ## Valido que la respuesta sea la misma que tiene parametrizada en la tabla de respuestas
@@ -484,7 +482,6 @@ class Usuarios(Resource):
             la_clmns_actlzr_rps['estdo']='true'
             la_clmns_actlzr_rps['fcha_mdfccn']=str(ld_fcha_actl)
             self.UsuarioActualizaRegistro(la_clmns_actlzr_rps,'tbclaves_tmp')
-
 
             ##consultar login y numero de cel para los mensajes
             lc_query_lgn = " select lgn, tlfno_cllr, id from ( "\
@@ -525,23 +522,18 @@ class Usuarios(Resource):
                 #ENVIO DEL CODIGO POR MENSAJE DE TEXTO
                 lc_sms = "La clave temporal generada por el sistema estará vigente por 30 minutos. Clave Generada:"+str(lc_cntrsna)
                 #lc_sms = lc_sms.replace(" ", "+")
-
-                print(lc_crro_slctnte)
-                print(asunto)
-                print(mensaje)
-                print(lc_sms)
-                print(ln_cllr)
-
                 lc_stts_web_srvcs_SMS = Utils.webServiceSMS(conf.URL_WS_SMS,ln_cllr,lc_sms,conf.LGN_USRO_WS_SMS,conf.CNTRSNA_USRO_WS_SMS)
-
                 return Utils.nice_json({labels.lbl_stts_success:'Clave Temporal Generada con Exito! Redireccionando Espera un Momento...'},200)
-
-
-
-
         else:
             return Utils.nice_json({labels.lbl_stts_error:"Error en una respuesta de las preguntas de seguridad"},400)
 
+    '''
+        @author:Cristian Botina
+        @since:07/07/2018
+        @summary:Valida que la respuesta sea la parametrizada por el usuario
+        @param: Self, id_lgn_ge,id_rspsta_prgnta_sgrdd, rspsta_prgnta
+        @return:Bool
+    '''
     def validaPreguntaSeguridad(self,id_lgn_ge,id_rspsta_prgnta_sgrdd, rspsta_prgnta):
         lc_query = " select "\
                    "     	id "\
@@ -558,79 +550,13 @@ class Usuarios(Resource):
         else:
             return False
 
-    def responderPreguntaSeguridadCopiaTemporal(self):
-
-        lc_crro_crprtvo = request.form['crro_crprtvo']
-        lc_query_clv_tmp = "select lgn, tlfno_cllr from ( "\
-                                    " select "\
-                                    " case when emplds_une.id is not null then "\
-                                    " emplds.crro_elctrnco "\
-                                    " else "\
-                                    " prstdr.crro_elctrnco "\
-                                    " end as crro_elctrnco,lgn.lgn, emplds.tlfno_cllr "\
-                                    " from "+dbConf.DB_SHMA+".tblogins_ge lgn_ge "\
-                                    " left join "+dbConf.DB_SHMA+".tblogins lgn on lgn.id = lgn_ge.id_lgn "\
-                                    " left join "+dbConf.DB_SHMA+".tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id "\
-                                    " left join "+dbConf.DB_SHMA+".tbempleados emplds on emplds.id = emplds_une.id_empldo "\
-                                    " left join "+dbConf.DB_SHMA+".tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id "\
-                                    " left join "+dbConf.DB_SHMA+".tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une "\
-                                    " left join "+dbConf.DB_SHMA+".tbcargos crgo on crgo.id = crgo_une.id_crgo "\
-                                    " left join "+dbConf.DB_SHMA+".tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco "\
-                                    " inner join "+dbConf.DB_SHMA+".tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
-                                    " inner join "+dbConf.DB_SHMA+".tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
-                                    " where id_mtvo_rtro_une is null) as test "\
-                                    " where crro_elctrnco ='"+lc_crro_crprtvo+"'"
-        Cursor_clv_tmp = lc_cnctn.queryFree(lc_query_clv_tmp)
-        if Cursor_clv_tmp :
-            #validamos que no tenga una clave temporal ya generada al menos 3 intentos en 30 min
-            lc_query = "select "\
-                         "count(estdo) as count "\
-                         "from "\
-                         ""+dbConf.DB_SHMA+".tbclaves_tmp "\
-                         "where "\
-                         "current_timestamp - fcha_crcn < INTERVAL '30' minute "\
-                         "and estdo = true "\
-                         "and crreo_slctnte ='"+lc_crro_crprtvo+"'"
-            Cursor = lc_cnctn.queryFree(lc_query)
-            if Cursor:
-                data_vlda = json.loads(json.dumps(Cursor[0], indent=2))
-                if data_vlda['count'] <=3:
-                    #try:
-                        #se inserta en la tabla para posterior validacion
-                        arrayValues = {}
-                        ld_fcha_actl = time.ctime()
-                        clave_tmp = Utils.aleatoria_n_digitos(8)
-                        arrayValues['cntrsna'] = str(clave_tmp)
-                        IpUsuario = IP(socket.gethostbyname(socket.gethostname()))
-                        arrayValues['ip'] = str(IpUsuario)
-                        device = Utils.DetectarDispositivo(request.headers.get('User-Agent'))
-                        arrayValues['dspstvo_accso'] = str(device)
-                        arrayValues['crreo_slctnte'] = str(lc_crro_crprtvo)
-                        arrayValues['fcha_mdfccn '] = str(ld_fcha_actl)
-                        lc_cnctn.queryInsert(dbConf.DB_SHMA + ".tbclaves_tmp", arrayValues)
-                        data = json.loads(json.dumps(Cursor_clv_tmp[0], indent=2))
-                        asunto = "Clave Temporal de Acceso Higia SSI"
-
-                        mensaje =   "Hola "+data['lgn']+" "\
-                                    "<p>La clave temporal auto generada por el sistema estará vigente por 30 minutos</p>"\
-                                    "<br>"\
-                                    "<b>Clave Generada:</b>"+str(clave_tmp)
-                        correo.enviarCorreo(lc_crro_crprtvo,asunto,mensaje)
-
-                        #ENVIO DEL CODIGO POR MENSAJE DE TEXTO
-                        ln_cllr = data['tlfno_cllr']
-                        lc_sms = "La clave temporal generada por el sistema estará vigente por 30 minutos. Clave Generada:"+str(clave_tmp)
-                        #lc_sms = lc_sms.replace(" ", "+")
-                        lc_stts_web_srvcs_SMS = Utils.webServiceSMS(conf.URL_WS_SMS,ln_cllr,lc_sms,conf.LGN_USRO_WS_SMS,conf.CNTRSNA_USRO_WS_SMS)
-
-                        return Utils.nice_json({labels.lbl_stts_success:'Clave Temporal Generada con Exito! Redireccionando Espera un Momento...'},200)
-                    #except Exception:
-                    #    return Utils.nice_json({labels.lbl_stts_error:'No es posible enviar los datos'},400)
-                else:
-                    return Utils.nice_json({labels.lbl_stts_error:'Ya se encuentra una Clave Generada para el ingreso Revisa tu correo o mensajes de texto intentalo mas tarde'},400)
-        else:
-            return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CRRO_SSTMA},400)
-
+    '''
+        @author:Cristian Botina
+        @since:07/07/2018
+        @summary:Valida que la clave temporal se encuentre en el lapso de tiempo y se encuentre habilitada
+        @param: Self
+        @return:Status
+    '''
     def validaclaveTemporal(self):
         lc_clve_tmprl = request.form['clve_tmprl']
         lc_query = "select "\
@@ -652,6 +578,13 @@ class Usuarios(Resource):
         else:
             return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_CLVE_TMP},400)
 
+    '''
+        @author:Cristian Botina
+        @since:07/07/2018
+        @summary:Metodo que actualiza la contraseña, cuando se hace desde el aside
+        @param: Self
+        @return:success, errors y Status
+    '''
     def actualizarContrenaInterna(self):
         lc_clve_actl = request.form['clve_tmprl']
         lc_nva_cntrsna = request.form['nva_cntrsna']
@@ -711,8 +644,13 @@ class Usuarios(Resource):
 
 
 
-        #return Utils.nice_json({"error":"contraseña prueba"},400)
-
+    '''
+        @author:Cristian Botina
+        @since:07/07/2018
+        @summary:Metodo que actualiza la contraseña, después de que responde las preguntas de seguridad por recuperación de contraseña
+        @param: Self
+        @return:success, errors y Status
+    '''
     def actualizarContrasena(self):
 
         lc_clve_tmprl = request.form['clve_tmprl']
@@ -773,18 +711,38 @@ class Usuarios(Resource):
         if Cursor_clv_tmp :
             data_usro = json.loads(json.dumps(Cursor_clv_tmp[0], indent=2))
 
-            #Actualiza login
-            la_clmns_actlzr_lgn = {}
-            la_clmns_actlzr_lgn['id']=str(data_usro['id_lgn'])
-            la_clmns_actlzr_lgn['cntrsna']=str(lc_cntrsna)
-            self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn,'tblogins')
+            '''
+            Validar el historial de contraseñas, si retorna un true, permite cambiar la contraseña
+            '''
 
-            la_clmns_actlzr_lgn_ge = {}
-            la_clmns_actlzr_lgn_ge['id']=str(data_usro['id_lgn_ge'])
-            la_clmns_actlzr_lgn_ge['fcha_mdfccn']=str(ld_fcha_actl)
-            self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn_ge,'tblogins_ge')
+            if self.validaHistorialContrasena(data_usro['id_lgn_ge'],str(lc_cntrsna))==True:
+                return Utils.nice_json({labels.lbl_stts_error:"Esta contraseña ha sido usada anteriormente, intenta con una contraseña diferente."},400)
+            else:
 
-            return Utils.nice_json({labels.lbl_stts_success:True},200)
+                #Actualiza login
+                la_clmns_actlzr_lgn = {}
+                la_clmns_actlzr_lgn['id']=str(data_usro['id_lgn'])
+                la_clmns_actlzr_lgn['cntrsna']=str(lc_cntrsna)
+                self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn,'tblogins')
+
+                la_clmns_actlzr_lgn_ge = {}
+                la_clmns_actlzr_lgn_ge['id']=str(data_usro['id_lgn_ge'])
+                la_clmns_actlzr_lgn_ge['fcha_mdfccn']=str(ld_fcha_actl)
+                self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn_ge,'tblogins_ge')
+
+                '''
+                Insertar el registro de historial de contraseñas
+                '''
+                la_clmns_insrtr_hstrl_ge = {}
+                la_clmns_insrtr_hstrl_ge['fcha_crcn']=str(ld_fcha_actl)
+                la_clmns_insrtr_hstrl_ge['fcha_mdfccn']=str(ld_fcha_actl)
+                la_clmns_insrtr_hstrl_ge['id_lgn_crcn_ge']=str(data_usro['id_lgn_ge'])
+                la_clmns_insrtr_hstrl_ge['id_lgn_mdfccn_ge']=str(data_usro['id_lgn_ge'])
+                la_clmns_insrtr_hstrl_ge['id_lgn_ge']=str(data_usro['id_lgn_ge'])
+                la_clmns_insrtr_hstrl_ge['cntrsna']=str(lc_cntrsna)
+                self.UsuarioInsertaRegistro(la_clmns_insrtr_hstrl_ge,'tbhistorial_claves')
+                return Utils.nice_json({labels.lbl_stts_success:True},200)
+
 
         '''
             Validar que solo lo permita hacer con usuarios que no estan con LDAP
@@ -964,7 +922,6 @@ class Usuarios(Resource):
         @param: Self, id_lgn_ge, nva_cntrsna, lmte_hstrco <optional> sino se envia se tomara por defecto el de configuracion.
         @return:bool true cuando la contrasena hace match ó false sino hace match
     '''
-
     def validaHistorialContrasena(self, ln_id_lgn_ge,lc_nva_cntrsna,ld_lmte_hstrco=None):
 
         if ld_lmte_hstrco is None:
