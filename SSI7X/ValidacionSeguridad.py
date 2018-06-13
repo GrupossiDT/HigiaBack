@@ -41,9 +41,9 @@ class ValidacionSeguridad(Resource):
                     " b.nmbre_scrsl as nmbre_scrsl,"\
                     " c.estdo as estdo ,"\
                     " b.id as id_scrsl "\
-                    " FROM ssi7x.tblogins_perfiles_sucursales a"\
-                    " left JOIN  ssi7x.tbsucursales b on a.id_scrsl=b.id"\
-                    " left join ssi7x.tblogins_ge c on c.id = a.id_lgn_ge"\
+                    " FROM "+confDB.DB_SHMA+".tblogins_perfiles_sucursales a"\
+                    " left JOIN  "+confDB.DB_SHMA+".tbsucursales b on a.id_scrsl=b.id"\
+                    " left join "+confDB.DB_SHMA+".tblogins_ge c on c.id = a.id_lgn_ge"\
                     " WHERE  a.id_lgn_ge = " + str(IdUsuarioGe['id_lgn_ge']) + " and a.mrca_scrsl_dfcto is true"
         Cursor = self.C.queryFree(strQuery)
 
@@ -66,12 +66,12 @@ class ValidacionSeguridad(Resource):
 
     def ValidaOpcionMenu(self, id_lgn_prfl_scrsl, id_mnu_ge):
             Cursor = self.C.queryFree(" select a.id "\
-                                 " from ssi7x.tblogins_perfiles_menu a inner join "\
-                                     " ssi7x.tblogins_perfiles_sucursales b "\
+                                 " from "+confDB.DB_SHMA+".tblogins_perfiles_menu a inner join "\
+                                     " "+confDB.DB_SHMA+".tblogins_perfiles_sucursales b "\
                                      " on a.id_lgn_prfl_scrsl = b.id inner join "\
-                                     " ssi7x.tblogins_ge c on c.id = b.id_lgn_ge inner join "\
-                                     " ssi7x.tbmenu_ge d on d.id = a.id_mnu_ge inner join "\
-                                     " ssi7x.tbmenu e on e.id = d.id_mnu "\
+                                     " "+confDB.DB_SHMA+".tblogins_ge c on c.id = b.id_lgn_ge inner join "\
+                                     " "+confDB.DB_SHMA+".tbmenu_ge d on d.id = a.id_mnu_ge inner join "\
+                                     " "+confDB.DB_SHMA+".tbmenu e on e.id = d.id_mnu "\
                                      " where c.estdo=true "\
                                      " and b.estdo=true "\
                                      " and a.estdo=true "\
@@ -108,16 +108,17 @@ class ValidacionSeguridad(Resource):
                              " emplds_une.id_undd_ngco "\
                                " END "\
                              " ) as id_undd_ngco,"\
-                             " lgn_ge.id_grpo_emprsrl as id_grpo_emprsrl "
-                             " from ssi7x.tblogins_ge lgn_ge " \
-                             " left join ssi7x.tblogins lgn on lgn.id = lgn_ge.id_lgn " \
-                             " left join ssi7x.tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id " \
-                             " left join ssi7x.tbempleados emplds on emplds.id = emplds_une.id_empldo " \
-                             " left join ssi7x.tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id " \
-                             " left join ssi7x.tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une " \
-                             " left join ssi7x.tbcargos crgo on crgo.id = crgo_une.id_crgo " \
-                             " left join ssi7x.tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco " \
-                             " inner join ssi7x.tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
-                             " inner join ssi7x.tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
+                             " lgn_ge.id_grpo_emprsrl as id_grpo_emprsrl, "
+                             " lgn_ge.cmbo_cntrsna as cmbo_cntrsna "
+                             " from "+confDB.DB_SHMA+".tblogins_ge lgn_ge " \
+                             " left join "+confDB.DB_SHMA+".tblogins lgn on lgn.id = lgn_ge.id_lgn " \
+                             " left join "+confDB.DB_SHMA+".tbempleados_une emplds_une on emplds_une.id_lgn_accso_ge = lgn_ge.id " \
+                             " left join "+confDB.DB_SHMA+".tbempleados emplds on emplds.id = emplds_une.id_empldo " \
+                             " left join "+confDB.DB_SHMA+".tbprestadores prstdr on prstdr.id_lgn_accso_ge = lgn_ge.id " \
+                             " left join "+confDB.DB_SHMA+".tbcargos_une crgo_une on crgo_une.id = emplds_une.id_crgo_une " \
+                             " left join "+confDB.DB_SHMA+".tbcargos crgo on crgo.id = crgo_une.id_crgo " \
+                             " left join "+confDB.DB_SHMA+".tbunidades_negocio undd_ngco on undd_ngco.id = emplds_une.id_undd_ngco " \
+                             " inner join "+confDB.DB_SHMA+".tblogins_perfiles_sucursales as prfl_scrsls on prfl_scrsls.id_lgn_ge = lgn_ge.id and prfl_scrsls.mrca_scrsl_dfcto is true "\
+                             " inner join "+confDB.DB_SHMA+".tbperfiles_une as prfl_une on prfl_une.id = prfl_scrsls.id_prfl_une "\
                              " where lgn.lgn = '" + usuario + "' and id_mtvo_rtro_une is null")
         return cursor
