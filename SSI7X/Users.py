@@ -221,14 +221,20 @@ class Usuarios(Resource):
         ld_fcha_actl = time.ctime()
         ln_opcn_mnu = request.form["id_mnu_ge"]
         lc_estdo = request.form["estdo"]
+        la_clmns_actlzr={}
+        md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
 
         '''
-            Validar que la contrasena cumpla con el Patron de contraseas, excepto que tenga el campo vacio
+            Validar que la contrasena cumpla con el Patron de contraseas, excepto que tenga el campo vacio, mientras el estado sea ACTIVO
         '''
-        if request.form['password']!="":
-            if not re.match(conf.EXPRESION_CLAVE_USUARIO, request.form['password']):
-                return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
 
+        if request.form['password']:
+            if not request.form['password']=="undefined":
+                ##Llega aquí cuando tiene datos
+                if not re.match(conf.EXPRESION_CLAVE_USUARIO, request.form['password']):
+                    return Utils.nice_json({labels.lbl_stts_error:errors.ERR_NO_PTRN_CLVE},400)
+                else:
+                    la_clmns_actlzr['cntrsna']=md5
 
 
         validacionSeguridad = ValidacionSeguridad()
@@ -241,7 +247,7 @@ class Usuarios(Resource):
             '''
                 INSERTAR DATOS
             '''
-            la_clmns_actlzr={}
+
             la_clmns_actlzr_ge={}
             #Actualizo tabla ge
             la_clmns_actlzr_ge['id']=request.form['id_login_ge']
@@ -252,9 +258,7 @@ class Usuarios(Resource):
 
             la_clmns_actlzr['nmbre_usro']=request.form['nombre_usuario']
 
-            if request.form['password']:
-                md5 = hashlib.md5(request.form['password'].encode('utf-8')).hexdigest()
-                la_clmns_actlzr['cntrsna']=md5
+
 
             '''
             Validar repetidos
@@ -635,6 +639,7 @@ class Usuarios(Resource):
             la_clmns_actlzr_lgn_ge = {}
             la_clmns_actlzr_lgn_ge['id']=str(data_usro['id_lgn_ge'])
             la_clmns_actlzr_lgn_ge['fcha_mdfccn']=str(ld_fcha_actl)
+            la_clmns_actlzr_lgn_ge['cmbo_cntrsna']='false'
             self.UsuarioActualizaRegistro(la_clmns_actlzr_lgn_ge,'tblogins_ge')
 
             return Utils.nice_json({labels.lbl_stts_success:True},200)
