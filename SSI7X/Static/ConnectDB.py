@@ -74,7 +74,11 @@ class ConnectDB():
         for key, value in objectValues.items():
             strValue = str(value)
             if not strValue.isnumeric():
-                set += key + "='" + value + "',"
+                if value is not None:
+                    set += key + "='" + value + "',"
+                else: 
+                    set += key + "=Null,"
+                
             else:
                 set += key + "=" + str(value) + ","
 
